@@ -63,6 +63,12 @@ export function usePath() {
       ? undefined
       : programs.find((p) => p.status === 'active' && p.missionId === activeMission.id)
 
+  /** 属于当前计划的训练记录（用于课次轮换与旅程进度；换计划后从头数） */
+  const programSessions =
+    activeProgram === undefined
+      ? []
+      : sessions.filter((s) => s.programId === activeProgram.id)
+
   const startWithTemplate = useCallback(async (template: ProgramTemplate) => {
     const now = new Date().toISOString()
     const missionId = uid()
@@ -100,21 +106,34 @@ export function usePath() {
     ))
   }, [])
 
-  /** 下一次计划训练：按完成次数轮换模板内的 session */
+  /** 下一次计划训练：按当前计划的完成次数轮换模板内的 session */
   const nextPlannedSessionId =
     activeProgram === undefined || activeProgram.sessions.length === 0
       ? undefined
-      : activeProgram.sessions[sessions.length % activeProgram.sessions.length].id
+      : activeProgram.sessions[programSessions.length % activeProgram.sessions.length].id
+
+  /** 放弃当前计划、回到入口重新选路径。训练记录是事实，保留不动；Mission/Program 只归档不删除。 */
+  const archiveActivePlan = useCallback(async () => {
+    if (activeMission === undefined || activeProgram === undefined) return
+    const archivedMission: Mission = { ...activeMission, status: 'replaced' }
+    const archivedProgram: Program = { ...activeProgram, status: 'superseded' }
+    await put('missions', archivedMission)
+    await put('programs', archivedProgram)
+    setMissions((prev) => prev.map((m) => (m.id === archivedMission.id ? archivedMission : m)))
+    setPrograms((prev) => prev.map((p) => (p.id === archivedProgram.id ? archivedProgram : p)))
+  }, [activeMission, activeProgram])
 
   return {
     loaded,
     missions,
     sessions,
+    programSessions,
     activeMission,
     activeProgram,
     nextPlannedSessionId,
     templateChoices: TEMPLATES,
     startWithTemplate,
+    archiveActivePlan,
     saveSession,
   }
 }

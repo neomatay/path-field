@@ -19,10 +19,12 @@ const TEMPLATE_LABEL: Record<ProgramTemplate['path'], string> = {
 }
 
 function App() {
-  const { loaded, activeMission, activeProgram, nextPlannedSessionId, sessions, templateChoices, startWithTemplate, saveSession } = usePath()
+  const { loaded, activeMission, activeProgram, nextPlannedSessionId, sessions, programSessions, missions, templateChoices, startWithTemplate, archiveActivePlan, saveSession } = usePath()
   const [screen, setScreen] = useState<Screen>('today')
   const [draft, setDraft] = useState<Session | null>(null)
   const [pendingTemplate, setPendingTemplate] = useState<ProgramTemplate | null>(null)
+  const [confirmSwitch, setConfirmSwitch] = useState(false)
+  const hasHistory = missions.length > 0
 
   const onExport = async () => {
     downloadSnapshot(await exportSnapshot())
@@ -101,6 +103,7 @@ function App() {
           ))}
           <p className="body entry-note">
             这不是等级测试，只是入口。三个入口都通向同一条主路：中断不清零、不补债，随时可以换。
+            {hasHistory ? '你之前的训练记录不会受影响，会一直保留在「记录」里。' : ''}
           </p>
         </main>
       </div>
@@ -152,7 +155,7 @@ function App() {
           </>
         )}
 
-        {screen === 'journey' && <Journey mission={activeMission} program={activeProgram} sessionsDone={sessions.length} />}
+        {screen === 'journey' && <Journey mission={activeMission} program={activeProgram} sessionsDone={programSessions.length} />}
         {screen === 'records' && <Records sessions={sessions} />}
 
         {screen === 'training' && draft !== null && (
@@ -196,7 +199,32 @@ function App() {
 
       <footer className="footnote">
         <button type="button" className="ghost small" onClick={() => void onExport()}>导出本地数据 (JSON)</button>
-        <p className="body">本地优先：数据仅存于本机。建议添加到主屏幕并定期导出。</p>
+        {confirmSwitch ? (
+          <span className="confirm-switch">
+            <button
+              type="button"
+              className="primary small"
+              onClick={() => {
+                void archiveActivePlan()
+                setConfirmSwitch(false)
+                setScreen('today')
+              }}
+            >
+              确认放弃当前计划
+            </button>
+            <button type="button" className="ghost small" onClick={() => setConfirmSwitch(false)}>
+              先不动
+            </button>
+          </span>
+        ) : (
+          <button type="button" className="ghost small" onClick={() => setConfirmSwitch(true)}>
+            重新选择路径
+          </button>
+        )}
+        <p className="body">
+          本地优先：数据仅存于本机。建议添加到主屏幕并定期导出。
+          换路径不删任何训练记录——它们是事实，会一直留在「记录」里。
+        </p>
       </footer>
     </div>
   )

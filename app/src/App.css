@@ -123,6 +123,17 @@
   gap: 7px;
 }
 
+/* 页脚小操作横排：导出 / 重新选择路径 / 两步确认 */
+.footnote .confirm-switch {
+  display: flex;
+  gap: 7px;
+}
+
+.footnote .confirm-switch .primary.small {
+  padding: 6px 9px;
+  font-size: 12px;
+}
+
 /* ---------- 状态检查 chips ---------- */
 
 .today,
