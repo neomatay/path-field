@@ -11,7 +11,9 @@ export default defineConfig({
     react(),
     // 本地优先 PWA：离线可用 + 可安装到主屏幕（iOS 会清理未安装 PWA 的数据，见 ROADMAP 第 7 节）
     VitePWA({
-      registerType: 'prompt',
+      // 自动更新：新 SW 安装后立即接管（skipWaiting），下次打开就是新版本。
+      // 之前用 'prompt' 但没做更新提示 UI，导致新版本永远不激活、用户一直看旧缓存。
+      registerType: 'autoUpdate',
       manifest: {
         name: 'PATH Field',
         short_name: 'PATH',
