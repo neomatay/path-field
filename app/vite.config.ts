@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // GitHub Pages 项目站点部署在 /path-field/ 子路径下
+  base: '/path-field/',
   plugins: [
     react(),
     // 本地优先 PWA：离线可用 + 可安装到主屏幕（iOS 会清理未安装 PWA 的数据，见 ROADMAP 第 7 节）
@@ -18,8 +20,8 @@ export default defineConfig({
         background_color: '#f1e2b8',
         display: 'standalone',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
       workbox: {
