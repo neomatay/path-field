@@ -1,6 +1,6 @@
 /**
- * 记录页：事实层 —— 统计带（4 周容量对比）、关键动作最佳（PR）、身体数据趋势、全部历史。
- * 只展示发生了什么，不做能力判断——判断属于周复盘。
+ * 记录页（仪表盘结构）：顶部数字条 + 页内分类 tab（训练 / 身体 / 最佳）。
+ * 只展示发生了什么的事实，不做能力判断——判断属于周复盘。
  */
 import { useState } from 'react'
 import type { BodyMetric, Program, Session } from '../core/types'
@@ -14,6 +14,8 @@ interface Props {
   bodyMetrics: BodyMetric[]
   onSaveBodyMetric: (b: BodyMetric) => void
 }
+
+type SubTab = 'sessions' | 'body' | 'best'
 
 /** 体重趋势迷你折线（纯 SVG，画报风格） */
 function WeightSparkline({ points }: { points: number[] }) {
@@ -38,6 +40,7 @@ function WeightSparkline({ points }: { points: number[] }) {
 }
 
 export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: Props) {
+  const [tab, setTab] = useState<SubTab>('sessions')
   const [weight, setWeight] = useState('')
   const [waist, setWaist] = useState('')
   const [hip, setHip] = useState('')
@@ -77,7 +80,6 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
         <section className="mission">
           <p className="label">记录</p>
           <h1>还没有记录</h1>
-          <p className="body">完成第一次训练后会出现在这里。</p>
         </section>
       </div>
     )
@@ -87,71 +89,83 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
 
   return (
     <div className="records">
-      <section className="mission">
-        <p className="label">记录</p>
-        <h1>{sorted.length} 次训练</h1>
-      </section>
-
-      <section className="stat-row">
-        <div className="stat">
-          <span className="stat-value">{totalCapacity > 0 ? Math.round(totalCapacity) : '—'}</span>
-          <span className="stat-label">累计容量 kg</span>
-        </div>
-        <div className="stat">
-          <span className="stat-value">{totalSets}</span>
-          <span className="stat-label">累计组数</span>
-        </div>
-        <div className="stat">
-          <span className="stat-value">
+      <section className="stat-line">
+        <span className="stat-line-item">
+          <span className="stat-line-value">{sorted.length}</span>
+          <span className="stat-line-label">次训练</span>
+        </span>
+        <span className="stat-line-item">
+          <span className="stat-line-value">{totalCapacity > 0 ? Math.round(totalCapacity) : '—'}</span>
+          <span className="stat-line-label">累计容量 kg · {totalSets} 组</span>
+        </span>
+        <span className="stat-line-item">
+          <span className="stat-line-value">
             {trend === undefined ? '—' : `${trend.deltaPct >= 0 ? '+' : ''}${trend.deltaPct}%`}
           </span>
-          <span className="stat-label">近 4 周容量</span>
-        </div>
+          <span className="stat-line-label">近 4 周</span>
+        </span>
       </section>
 
-      {keyPRs.length > 0 && (
-        <section>
-          <p className="label">关键动作最佳</p>
-          <ul className="pr-list">
-            {keyPRs.map(({ exerciseId, best }) => (
-              <li key={exerciseId}>
-                {EXERCISES_BY_ID[exerciseId]?.name ?? exerciseId}
-                <span className="meta">
-                  {' '}{best!.weightKg !== undefined ? `${best!.weightKg}kg x ${best!.reps}` : `${best!.reps} 次`}
-                  {' '}· {new Date(best!.date).toLocaleDateString('zh-CN')}
-                </span>
-              </li>
-            ))}
-          </ul>
+      <nav className="subtabs">
+        {([['sessions', '训练'], ['body', '身体'], ['best', '最佳']] as Array<[SubTab, string]>).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            className={tab === key ? 'subtab selected' : 'subtab'}
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {tab === 'body' && (
+        <section className="tab-panel">
+          <div className="metric-form">
+            <input type="number" inputMode="decimal" step={0.1} placeholder="体重 kg"
+              value={weight} onChange={(e) => setWeight(e.target.value)} />
+            <input type="number" inputMode="decimal" step={0.5} placeholder="腰围 cm"
+              value={waist} onChange={(e) => setWaist(e.target.value)} />
+            <input type="number" inputMode="decimal" step={0.5} placeholder="臀围 cm"
+              value={hip} onChange={(e) => setHip(e.target.value)} />
+            <input type="number" inputMode="decimal" step={0.1} placeholder="体脂 %"
+              value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} />
+            <button type="button" className="ghost small" onClick={saveMetric}>记录</button>
+          </div>
+          {weights.length >= 2 && <WeightSparkline points={weights} />}
+          {latest !== undefined && (
+            <p className="meta">
+              {new Date(latest.recordedAt).toLocaleDateString('zh-CN')}
+              {latest.weightKg !== undefined && ` · 体重 ${latest.weightKg}kg`}
+              {latest.waistCm !== undefined && ` · 腰围 ${latest.waistCm}cm`}
+              {latest.hipCm !== undefined && ` · 臀围 ${latest.hipCm}cm`}
+              {latest.bodyFatPct !== undefined && ` · 体脂 ${latest.bodyFatPct}%`}
+            </p>
+          )}
         </section>
       )}
 
-      <section>
-        <p className="label">身体数据</p>
-        <div className="metric-form">
-          <input type="number" inputMode="decimal" step={0.1} placeholder="体重 kg"
-            value={weight} onChange={(e) => setWeight(e.target.value)} />
-          <input type="number" inputMode="decimal" step={0.5} placeholder="腰围 cm"
-            value={waist} onChange={(e) => setWaist(e.target.value)} />
-          <input type="number" inputMode="decimal" step={0.5} placeholder="臀围 cm"
-            value={hip} onChange={(e) => setHip(e.target.value)} />
-          <input type="number" inputMode="decimal" step={0.1} placeholder="体脂 %"
-            value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} />
-          <button type="button" className="ghost small" onClick={saveMetric}>记录</button>
-        </div>
-        {weights.length >= 2 && <WeightSparkline points={weights} />}
-        {latest !== undefined && (
-          <p className="meta">
-            {new Date(latest.recordedAt).toLocaleDateString('zh-CN')}
-            {latest.weightKg !== undefined && ` · 体重 ${latest.weightKg}kg`}
-            {latest.waistCm !== undefined && ` · 腰围 ${latest.waistCm}cm`}
-            {latest.hipCm !== undefined && ` · 臀围 ${latest.hipCm}cm`}
-            {latest.bodyFatPct !== undefined && ` · 体脂 ${latest.bodyFatPct}%`}
-          </p>
-        )}
-      </section>
+      {tab === 'best' && (
+        <section className="tab-panel">
+          {keyPRs.length === 0 ? (
+            <p className="meta">关键动作还没有可比记录。</p>
+          ) : (
+            <ul className="pr-list">
+              {keyPRs.map(({ exerciseId, best }) => (
+                <li key={exerciseId}>
+                  {EXERCISES_BY_ID[exerciseId]?.name ?? exerciseId}
+                  <span className="meta">
+                    {' '}{best!.weightKg !== undefined ? `${best!.weightKg}kg x ${best!.reps}` : `${best!.reps} 次`}
+                    {' '}· {new Date(best!.date).toLocaleDateString('zh-CN')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
-      {sorted.map((s) => (
+      {tab === 'sessions' && sorted.map((s) => (
         <section key={s.id} className="record-card">
           <div className="record-head">
             <h2>{new Date(s.startedAt).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' })}</h2>

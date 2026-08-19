@@ -4,6 +4,7 @@ import { downloadSnapshot, exportSnapshot } from './store/db'
 import { usePath, type OnboardingAnswers } from './store/usePath'
 import type { ProgramTemplate } from './data/templates'
 import type { Session } from './core/types'
+import { weekStreak } from './core/stats'
 import { Today } from './ui/Today'
 import { Training } from './ui/Training'
 import { Receipt } from './ui/Receipt'
@@ -142,6 +143,12 @@ function App() {
   monday.setHours(0, 0, 0, 0)
   const thisWeekHasWeight = bodyMetrics.some((b) => Date.parse(b.recordedAt) >= monday.getTime())
 
+  /** 本周（当前计划内）已完成次数与当前周连击（用于「今天」页数字条） */
+  const weekDone = programSessions.filter(
+    (s) => Date.parse(s.startedAt) >= monday.getTime() && s.outcome !== 'skipped',
+  ).length
+  const streakCurrent = weekStreak(sessions, activeProgram.weeklyRhythm.minViablePerWeek).current
+
   return (
     <div className="app">
       <header className="topline">
@@ -151,36 +158,19 @@ function App() {
 
       <main className="stage">
         {screen === 'today' && (
-          <>
-            <section className="mission">
-              <p className="label">当前 Mission · {new Date(activeMission.reviewDate).toLocaleDateString('zh-CN')} 复盘</p>
-              <h1>{activeMission.title}</h1>
-              <div className="mission-rule" aria-hidden="true" />
-            </section>
-            <Today
-              program={activeProgram}
-              nextPlannedSessionId={nextPlannedSessionId}
-              showBodyPrompt={!thisWeekHasWeight}
-              onGoRecords={() => setScreen('records')}
-              onStartTraining={(s) => {
-                setDraft(s)
-                void saveSession(s)
-                setScreen('training')
-              }}
-            />
-            {sessions.length > 0 && (
-              <section>
-                <p className="label">最近记录</p>
-                <ul className="history">
-                  {sessions.slice(0, 3).map((s) => (
-                    <li key={s.id}>
-                      {new Date(s.startedAt).toLocaleDateString('zh-CN')} · {variantLabel(s.selectedVariant)} · {outcomeLabel(s.outcome)}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-          </>
+          <Today
+            program={activeProgram}
+            nextPlannedSessionId={nextPlannedSessionId}
+            weekDone={weekDone}
+            streakCurrent={streakCurrent}
+            showBodyPrompt={!thisWeekHasWeight}
+            onGoRecords={() => setScreen('records')}
+            onStartTraining={(s) => {
+              setDraft(s)
+              void saveSession(s)
+              setScreen('training')
+            }}
+          />
         )}
 
         {screen === 'journey' && (
@@ -400,14 +390,6 @@ function JourneyPreviewSection({ template }: { template: ProgramTemplate }) {
       <p className="body">三个版本都在主路上，按状态与时间选。</p>
     </section>
   )
-}
-
-function variantLabel(v: Session['selectedVariant']): string {
-  return v === 'full' ? '完整' : v === 'short' ? '短版' : v === 'recovery' ? '恢复' : '自由'
-}
-
-function outcomeLabel(o: Session['outcome']): string {
-  return o === 'completed' ? '完成' : o === 'partial' ? '部分完成' : o === 'recovery' ? '恢复' : o === 'stoppedForSafety' ? '因安全停止' : '跳过'
 }
 
 export default App

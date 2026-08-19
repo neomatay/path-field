@@ -1,7 +1,7 @@
 /**
- * 今天页：10 秒状态检查（时间 / 精力 / 睡眠 / 不适）-> 完整/短版/恢复版选择 -> 开始训练。
- * 依据契约 6 节：推荐区显示 ruleId 的用户可读理由、至少一个替代选项；
- * urgent 的状态不得显示开始完整训练。
+ * 今天页（仪表盘结构）：主焦点是一键开始训练；状态签到是可选微调，不是门槛。
+ * 签到未答时按默认条件推荐完整版；答了则规则引擎实时改推荐（睡眠不足→短版等）。
+ * 安全底线不变：红旗信号下完整版不可用。
  */
 import { useMemo, useState } from 'react'
 import type { CurrentState, DiscomfortLevel, Program, Session, VariantKind } from '../core/types'
@@ -37,13 +37,17 @@ const VARIANT_LABEL: Record<VariantKind, string> = {
 interface Props {
   program: Program
   nextPlannedSessionId?: string
-  /** 本周还没记录体重时显示一行轻提示 */
+  /** 本周已完成次数（用于数字条） */
+  weekDone: number
+  /** 当前周连击（用于数字条） */
+  streakCurrent: number
+  /** 本周还没记录体重时显示轻提示 */
   showBodyPrompt?: boolean
   onGoRecords?: () => void
   onStartTraining: (session: Session) => void
 }
 
-export function Today({ program, nextPlannedSessionId, showBodyPrompt, onGoRecords, onStartTraining }: Props) {
+export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, showBodyPrompt, onGoRecords, onStartTraining }: Props) {
   const [availableMinutes, setMinutes] = useState<number | null>(null)
   const [readiness, setReadiness] = useState<CurrentState['readiness'] | null>(null)
   const [discomfort, setDiscomfort] = useState<DiscomfortLevel | null>(null)
@@ -58,30 +62,27 @@ export function Today({ program, nextPlannedSessionId, showBodyPrompt, onGoRecor
     [discomfort],
   )
 
+  // 签到可选：未答的项用中性默认值，规则引擎作为推荐器而不是门槛
   const variant = useMemo(
     () =>
-      safety === null || availableMinutes === null || readiness === null
-        ? null
-        : evaluateVariant({
-            riskLevel: safety.riskLevel,
-            availableMinutes,
-            fullVariantMinutes: program.variants.full.estimatedMinutes,
-            readiness,
-            sleepBand: sleepBand ?? undefined,
-          }),
+      evaluateVariant({
+        riskLevel: safety?.riskLevel ?? 'none',
+        availableMinutes: availableMinutes ?? program.variants.full.estimatedMinutes,
+        fullVariantMinutes: program.variants.full.estimatedMinutes,
+        readiness: readiness ?? 'ok',
+        sleepBand: sleepBand ?? undefined,
+      }),
     [safety, availableMinutes, readiness, sleepBand, program],
   )
 
   const planned =
     program.sessions.find((s) => s.id === nextPlannedSessionId) ?? program.sessions[0]
 
-  const checkDone = availableMinutes !== null && readiness !== null && discomfort !== null
-  const selectedVariant = chosen ?? variant?.recommended ?? null
-  const canStart =
-    checkDone && selectedVariant !== null && !(selectedVariant === 'full' && safety?.riskLevel !== 'none')
+  const selectedVariant = chosen ?? variant.recommended
+  const fullBlocked = selectedVariant === 'full' && safety?.riskLevel !== 'none'
 
   const start = () => {
-    if (!canStart || selectedVariant === null) return
+    if (fullBlocked) return
     const now = new Date().toISOString()
     onStartTraining({
       id: uid(),
@@ -93,7 +94,7 @@ export function Today({ program, nextPlannedSessionId, showBodyPrompt, onGoRecor
       selectedVariant,
       actualBlocks: [],
       adjustments:
-        chosen !== null && chosen !== variant?.recommended
+        chosen !== null && chosen !== variant.recommended
           ? [{ type: 'variantChange', reason: undefined, source: 'user' }]
           : [],
       checkIn: {
@@ -106,152 +107,157 @@ export function Today({ program, nextPlannedSessionId, showBodyPrompt, onGoRecor
     })
   }
 
+  const anyAnswered = availableMinutes !== null || readiness !== null || discomfort !== null || sleepBand !== null
+  const minutes = program.variants[selectedVariant].estimatedMinutes
+
   return (
     <div className="today">
       <section>
         <p className="label">今天的训练 · {planned?.title ?? '计划训练'}</p>
       </section>
 
-      {/* 10 秒状态检查 */}
-      <section>
-        <p className="label">今天可用时间</p>
-        <div className="chips">
-          {MINUTE_OPTIONS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={availableMinutes === m ? 'chip selected' : 'chip'}
-              aria-pressed={availableMinutes === m}
-              onClick={() => setMinutes(m)}
-            >
-              {m} 分钟
-            </button>
-          ))}
-        </div>
-      </section>
+      <button type="button" className="hero-cta" onClick={start}>
+        <span className="cta-title">
+          {selectedVariant === 'recovery' ? '开始恢复活动' : '开始训练'}
+        </span>
+        <span className="cta-sub">
+          {VARIANT_LABEL[selectedVariant]} · 约 {minutes} 分钟
+        </span>
+      </button>
 
-      <section>
-        <p className="label">精力自评</p>
-        <div className="chips">
-          {READINESS_OPTIONS.map((o) => (
-            <button
-              key={o.value}
-              type="button"
-              className={readiness === o.value ? 'chip selected' : 'chip'}
-              aria-pressed={readiness === o.value}
-              onClick={() => setReadiness(o.value)}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <p className="label">不适 / 风险</p>
-        <div className="chips">
-          {DISCOMFORT_OPTIONS.map((o) => (
-            <button
-              key={o.value}
-              type="button"
-              className={discomfort === o.value ? 'chip selected' : 'chip'}
-              aria-pressed={discomfort === o.value}
-              onClick={() => setDiscomfort(o.value)}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-        {safety !== null && safety.riskLevel !== 'none' && (
-          <p className={safety.riskLevel === 'urgent' ? 'safety urgent' : 'safety caution'}>
-            {safety.message}
-          </p>
-        )}
-      </section>
-
-      <section>
-        <p className="label">昨晚睡了多久</p>
-        <div className="chips">
-          {SLEEP_OPTIONS.map((o) => (
-            <button
-              key={o.value}
-              type="button"
-              className={sleepBand === o.value ? 'chip selected' : 'chip'}
-              aria-pressed={sleepBand === o.value}
-              onClick={() => setSleepBand(sleepBand === o.value ? null : o.value)}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {showBodyPrompt === true && onGoRecords !== undefined && (
-        <p className="body body-prompt">
-          本周还没记体重。
-          <button type="button" className="ghost small" onClick={onGoRecords}>去记一笔</button>
+      {anyAnswered && (
+        <p className="body" style={{ margin: 0 }}>{variant.reason}</p>
+      )}
+      {safety !== null && safety.riskLevel !== 'none' && (
+        <p className={safety.riskLevel === 'urgent' ? 'safety urgent' : 'safety caution'}>
+          {safety.message}
         </p>
       )}
 
-      {/* 版本选择（检查完成后出现） */}
-      {checkDone && variant !== null && (
-        <section className="variants">
-          <p className="label">
-            {VARIANT_LABEL[variant.recommended]} · {variant.ruleId}
-          </p>
-          <p className="body">{variant.reason}</p>
-          <div className="variant-list">
-            {(['full', 'short', 'recovery'] as VariantKind[])
-              .filter((k) => variant.selectable.includes(k))
-              .map((k) => {
+      <section className="stat-line">
+        <span className="stat-line-item">
+          <span className="stat-line-value">{weekDone}</span>
+          <span className="stat-line-label">本周 / {program.weeklyRhythm.recommendedPerWeek} 次</span>
+        </span>
+        <span className="stat-line-item">
+          <span className="stat-line-value">{streakCurrent}</span>
+          <span className="stat-line-label">周连击</span>
+        </span>
+        {showBodyPrompt === true && onGoRecords !== undefined && (
+          <button type="button" className="ghost small stat-line-link" onClick={onGoRecords}>
+            记体重
+          </button>
+        )}
+      </section>
+
+      <details className="fold">
+        <summary>状态微调 · 可选</summary>
+        <div className="fold-body">
+          <section>
+            <p className="label">今天可用时间</p>
+            <div className="chips">
+              {MINUTE_OPTIONS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={availableMinutes === m ? 'chip selected' : 'chip'}
+                  aria-pressed={availableMinutes === m}
+                  onClick={() => setMinutes(availableMinutes === m ? null : m)}
+                >
+                  {m} 分钟
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <p className="label">精力自评</p>
+            <div className="chips">
+              {READINESS_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  className={readiness === o.value ? 'chip selected' : 'chip'}
+                  aria-pressed={readiness === o.value}
+                  onClick={() => setReadiness(readiness === o.value ? null : o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <p className="label">昨晚睡了多久</p>
+            <div className="chips">
+              {SLEEP_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  className={sleepBand === o.value ? 'chip selected' : 'chip'}
+                  aria-pressed={sleepBand === o.value}
+                  onClick={() => setSleepBand(sleepBand === o.value ? null : o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <p className="label">不适 / 风险</p>
+            <div className="chips">
+              {DISCOMFORT_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  className={discomfort === o.value ? 'chip selected' : 'chip'}
+                  aria-pressed={discomfort === o.value}
+                  onClick={() => setDiscomfort(discomfort === o.value ? null : o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <p className="label">版本</p>
+            <div className="chips">
+              {(['full', 'short', 'recovery'] as VariantKind[]).map((k) => {
                 const blocked = k === 'full' && safety?.riskLevel !== 'none'
-                const v = program.variants[k]
                 return (
                   <button
                     key={k}
                     type="button"
                     disabled={blocked}
-                    className={selectedVariant === k ? 'variant selected' : 'variant'}
+                    className={selectedVariant === k ? 'chip selected' : 'chip'}
                     onClick={() => setChosen(k)}
                   >
-                    <span className="variant-name">
-                      {VARIANT_LABEL[k]}
-                      {variant.recommended === k && !blocked ? ' · 推荐' : ''}
-                      {blocked ? ' · 今日不可用' : ''}
-                    </span>
-                    <span className="variant-meta">
-                      约 {v.estimatedMinutes} 分钟 · 保留：{v.keeps}
-                    </span>
+                    {VARIANT_LABEL[k]}
+                    {variant.recommended === k ? ' · 推荐' : ''}
                   </button>
                 )
               })}
-          </div>
-          {variant.unknowns.length > 0 && (
-            <p className="unknowns">仍不确定：{variant.unknowns.join('；')}</p>
-          )}
-        </section>
-      )}
-
-      <button type="button" className="primary" disabled={!canStart} onClick={start}>
-        {selectedVariant === 'recovery'
-          ? '开始恢复活动'
-          : selectedVariant === 'short'
-            ? `开始 20 分钟短版`
-            : `开始完整训练 · 约 ${program.variants.full.estimatedMinutes} 分钟`}
-      </button>
+            </div>
+          </section>
+        </div>
+      </details>
 
       {planned && (
-        <section className="plan-preview">
-          <p className="label">完整版动作</p>
-          <ul>
-            {planned.blocks.map((b) => (
-              <li key={b.exerciseId}>
-                {EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}
-                <span className="meta"> · {b.targetSets} x {b.targetReps}{b.keyToMission ? ' · 关键' : ''}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <details className="fold">
+          <summary>今天练什么</summary>
+          <div className="fold-body">
+            <ul>
+              {planned.blocks.map((b) => (
+                <li key={b.exerciseId}>
+                  {EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}
+                  <span className="meta"> · {b.targetSets} x {b.targetReps}{b.keyToMission ? ' · 关键' : ''}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </details>
       )}
     </div>
   )
