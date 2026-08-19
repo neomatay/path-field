@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Route Topo - Today</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        color-scheme: dark;
+        --basalt: #121614;
+        --lichen: #202a25;
+        --chalk: #e2e4d8;
+        --fog: #aeb7ad;
+        --moss: #7fa28c;
+        --route: #d86447;
+        --route-soft: #a24d3d;
+        --line: #3d4b43;
+        --gold: #d9bc6d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        align-items: center;
+        background: #0b0e0d;
+        color: var(--chalk);
+        display: flex;
+        font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
+        justify-content: center;
+        margin: 0;
+        min-height: 100vh;
+      }
+      .phone {
+        background: var(--basalt);
+        box-shadow: 0 28px 72px rgba(0, 0, 0, .48);
+        height: 844px;
+        overflow: hidden;
+        position: relative;
+        width: 390px;
+      }
+      .phone::after {
+        border: 1px solid #1d2521;
+        content: "";
+        inset: 10px;
+        pointer-events: none;
+        position: absolute;
+      }
+      header {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        justify-content: space-between;
+        padding: 24px 25px 0;
+        position: relative;
+        z-index: 2;
+      }
+      .day { color: var(--fog); }
+      .stage { color: var(--gold); font-variant-numeric: tabular-nums; }
+      main { padding: 28px 25px 24px; position: relative; z-index: 1; }
+      h1 {
+        font-family: "Noto Serif SC", serif;
+        font-size: 38px;
+        font-weight: 500;
+        line-height: 1.14;
+        margin: 0;
+      }
+      .subhead { color: var(--fog); font-size: 14px; line-height: 1.7; margin: 10px 0 0; }
+      .topo {
+        height: 318px;
+        margin: 14px -25px 0;
+        overflow: hidden;
+        position: relative;
+      }
+      .topo::before {
+        border: 1px solid #29342e;
+        content: "";
+        height: 270px;
+        left: -82px;
+        position: absolute;
+        top: 18px;
+        transform: rotate(-13deg);
+        width: 540px;
+      }
+      .topo::after {
+        border: 1px solid #29342e;
+        content: "";
+        height: 218px;
+        left: -46px;
+        position: absolute;
+        top: 45px;
+        transform: rotate(-13deg);
+        width: 474px;
+      }
+      .route-map { height: 100%; overflow: visible; position: relative; width: 100%; z-index: 1; }
+      .route-map .contour { fill: none; stroke: #354139; stroke-width: 1; }
+      .route-map .route { fill: none; stroke: var(--route); stroke-linecap: round; stroke-linejoin: round; stroke-width: 4; }
+      .route-map .option { fill: none; stroke: #71927e; stroke-dasharray: 3 7; stroke-linecap: round; stroke-width: 2; }
+      .route-map .node { fill: var(--basalt); stroke: var(--route); stroke-width: 3; }
+      .route-map .node.safe { stroke: var(--moss); }
+      .route-map .node.end { fill: var(--route); stroke: var(--route); }
+      .route-copy {
+        bottom: 20px;
+        left: 25px;
+        position: absolute;
+        right: 25px;
+        z-index: 2;
+      }
+      .route-copy .label { color: var(--gold); font-size: 11px; }
+      .route-copy strong { display: block; font-size: 18px; font-weight: 600; margin-top: 5px; }
+      .route-copy p { color: var(--fog); font-size: 12px; margin: 4px 0 0; }
+      .evidence { border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; margin-top: 1px; }
+      .evidence div { padding: 15px 0 16px; }
+      .evidence div + div { border-left: 1px solid var(--line); padding-left: 18px; }
+      .evidence small { color: var(--fog); display: block; font-size: 11px; }
+      .evidence strong { display: block; font-size: 15px; font-weight: 600; margin-top: 5px; }
+      .evidence strong.good { color: #b8d0bd; }
+      .action {
+        align-items: center;
+        background: var(--chalk);
+        color: #18201c;
+        display: flex;
+        font-size: 16px;
+        font-weight: 700;
+        justify-content: space-between;
+        margin-top: 16px;
+        min-height: 58px;
+        padding: 0 18px;
+      }
+      .action span:last-child { color: var(--route-soft); font-size: 18px; }
+      .alternate { color: var(--fog); font-size: 12px; line-height: 1.6; margin: 12px 0 0; }
+      .alternate b { color: var(--moss); font-weight: 600; }
+      @media (max-width: 430px) {
+        body { align-items: flex-start; background: var(--basalt); }
+        .phone { box-shadow: none; min-height: 100vh; width: 100vw; }
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+    THESIS: A training session is a readable route, not a wall of metrics.
+    OWN-WORLD: Basalt, chalk, field-map contours, a coral ascent line, and exact mobile operating controls.
+    STORY: The user sees the present Mission, one viable route, and an honest recovery alternative.
+    FIRST VIEWPORT: The route field owns the center; evidence sits beneath it; one clear action closes the screen.
+    FORM: Mobile Operate surface, candidate 6, seed 5d19ca9b.
+    FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+    -->
+    <div class="phone">
+      <header>
+        <span class="day">周四 · 12:04</span>
+        <span class="stage">路径 03 / 06</span>
+      </header>
+      <main>
+        <h1>下肢，继续向上</h1>
+        <p class="subhead">今天不需要证明什么。完成这一段，让下次的你有新的握点。</p>
+        <section class="topo" aria-label="今日训练路线">
+          <svg class="route-map" viewBox="0 0 390 318" aria-hidden="true">
+            <path class="contour" d="M-42 83 C66 16 115 88 170 58 S273 12 432 63" />
+            <path class="contour" d="M-38 124 C44 66 117 142 183 99 S286 47 430 104" />
+            <path class="contour" d="M-32 167 C49 112 123 188 195 142 S288 93 425 146" />
+            <path class="contour" d="M-16 219 C59 162 138 233 208 192 S312 141 416 196" />
+            <path class="option" d="M74 228 C143 219 153 168 190 156 C238 140 245 98 301 69" />
+            <path class="route" d="M59 248 C101 227 105 187 142 176 C182 163 181 125 217 113 C259 101 259 66 311 46" />
+            <circle class="node safe" cx="59" cy="248" r="8" />
+            <circle class="node" cx="142" cy="176" r="8" />
+            <circle class="node" cx="217" cy="113" r="8" />
+            <circle class="node end" cx="311" cy="46" r="8" />
+          </svg>
+          <div class="route-copy">
+            <span class="label">当前 MISSION</span>
+            <strong>建立可比较的下肢训练证据</strong>
+            <p>55 分钟可用 · 精力稳定 · 完整路线可执行</p>
+          </div>
+        </section>
+        <section class="evidence" aria-label="最近训练证据">
+          <div><small>上次可比表现</small><strong>腿举 80 kg × 10</strong></div>
+          <div><small>身体观察</small><strong class="good">腰部不适降低</strong></div>
+        </section>
+        <div class="action" role="button" aria-label="开始完整训练"><span>开始完整训练</span><span>→</span></div>
+        <p class="alternate"><b>时间不足？</b> 路线会收缩为 25 分钟短版，保留今天最关键的两个握点。</p>
+      </main>
+    </div>
+  </body>
+</html>

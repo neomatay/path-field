@@ -1,0 +1,14 @@
+# 构建产物与依赖
+node_modules/
+dist/
+dev.log
+*.log
+
+# 系统与本地工具
+.DS_Store
+.omc/
+.claude/
+
+# 本地环境
+.env
+.env.*

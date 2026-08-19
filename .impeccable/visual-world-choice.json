@@ -1,0 +1,72 @@
+{
+  "title": "选择训练产品的设计世界",
+  "question": "选定一个世界后，所有训练、成长和复盘界面都会遵守它的视觉与交互规律。",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "攀登路线图",
+      "kicker": "本轮方向",
+      "lineage": "攀岩指南、岩壁拓扑与粉笔路线卡",
+      "thesis": "训练不是刷数据，而是一条能读懂、能改线、能在下一次握住的路线。",
+      "palette": ["#101615", "#D8D4C8", "#D95B3E", "#8FB3A0"],
+      "materials": ["火山岩", "粉笔标记", "耐候地图纸"],
+      "viewport": "首屏是一张贴近岩壁的当日路线：一条明确主线、一个可选绕行和一处安全回撤点；用户一眼看见下一次握点而非仪表盘。",
+      "risk": "若把路线符号只当装饰，会削弱操作清晰度；必须让每个节点对应真实 Mission、训练证据或计划选择。",
+      "sketch": ".impeccable/sketches/route-topo.png"
+    },
+    {
+      "id": "challenger-wpa-park-poster",
+      "label": "国家公园路线海报",
+      "lineage": "WPA 国家公园旅行海报",
+      "thesis": "每个阶段像一张值得走进去的远行海报。",
+      "case": "探索感很强，但训练中的细小状态和记录会被景观叙事压住；更适合品牌叙事页，不适合作为主操作世界。",
+      "palette": ["#0B6C70", "#235F45", "#D47C32", "#F4E7C5"],
+      "materials": ["平版印刷", "四层色面", "旅行海报纸"],
+      "viewport": "一张完整的阶段远景与一条明确的行动号令。",
+      "risk": "容易把真实训练变成宣传画。",
+      "sketch": ".impeccable/sketches/wpa-park.webp",
+      "hero": "https://impeccable.style/worlds/cards/posters-covers-sleeves-wpa-park-poster-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/posters-covers-sleeves-wpa-park-poster.webp"
+    },
+    {
+      "id": "challenger-racing-league",
+      "label": "竞速联盟",
+      "lineage": "反锯齿竞速联赛识别系统",
+      "thesis": "训练是一段持续推进、可视化节奏与表现的赛道。",
+      "case": "信息密度和操作节奏很强，但会把产品推向速度、竞争与性能崇拜，违背恢复、重返和非评判的产品承诺。",
+      "palette": ["#22272A", "#E6FF2E", "#FF5B2E", "#F7F7F2"],
+      "materials": ["哑光赛道", "几何贴花", "仪表盘数字"],
+      "viewport": "横向速度轴上的状态与任务。",
+      "risk": "用户会被鼓励加速，而不是理解身体。",
+      "sketch": ".impeccable/sketches/racing-league.webp",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-antialiased-racing-league-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/digital-design-canon-antialiased-racing-league.webp"
+    },
+    {
+      "id": "challenger-hypercard-stack",
+      "label": "可编辑训练卡组",
+      "lineage": "HyperCard 卡片堆栈",
+      "thesis": "每次训练是一张可修改、可回溯、可重排的行动卡。",
+      "case": "对计划修改与重返很清晰，但一位元、玩具化的媒介语言难以承载用户要求的温度、材质和身体感。",
+      "palette": ["#FFFFFF", "#111111", "#8E8E8E"],
+      "materials": ["索引卡", "油墨", "像素印刷"],
+      "viewport": "当前训练卡置顶，用户顺着真实路径回到历史卡片。",
+      "risk": "更像个人效率工具，弱化身体与旅程。",
+      "sketch": ".impeccable/sketches/hypercard-stack.webp",
+      "hero": "https://impeccable.style/worlds/cards/medium-native-hypercard-stack-shoebox-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/medium-native-hypercard-stack-shoebox.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "canonCard": {
+    "label": "类别常规做法",
+    "thesis": "一套精致、简约的通用健康 App 界面。",
+    "palette": ["#F7F7F7", "#1D1D1F", "#007AFF"],
+    "materials": ["系统表面", "标准卡片"],
+    "viewport": "状态卡、趋势图和一个开始训练按钮。",
+    "risk": "可靠，却无法形成用户会记住的产品世界。",
+    "sketch": ".impeccable/sketches/canon.webp"
+  },
+  "steer": true
+}

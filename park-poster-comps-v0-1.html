@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>国家公园路线海报 - 构图探索</title>
+    <style>
+      :root {
+        --night: #102b2b;
+        --fir: #205540;
+        --lake: #007d80;
+        --sun: #eea43a;
+        --clay: #c75d3e;
+        --paper: #f4e6c4;
+        --mist: #d6d8c1;
+        --ink: #17221e;
+        --quiet: #52635b;
+        --line: rgba(23, 34, 30, 0.22);
+      }
+
+      * { box-sizing: border-box; }
+
+      html { background: var(--night); }
+
+      body {
+        margin: 0;
+        background: var(--night);
+        color: var(--paper);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button { font: inherit; }
+
+      .page {
+        margin: 0 auto;
+        max-width: 1420px;
+        padding: 28px 28px 60px;
+      }
+
+      .masthead {
+        align-items: end;
+        border-bottom: 1px solid rgba(244, 230, 196, 0.3);
+        display: flex;
+        gap: 24px;
+        justify-content: space-between;
+        padding-bottom: 24px;
+      }
+
+      h1, h2, h3, p { margin: 0; }
+
+      h1 {
+        font-size: clamp(34px, 4vw, 58px);
+        font-weight: 740;
+        line-height: 1.08;
+      }
+
+      .subhead {
+        color: rgba(244, 230, 196, 0.74);
+        font-size: 15px;
+        line-height: 1.7;
+        max-width: 530px;
+        text-align: right;
+      }
+
+      .rule {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin: 26px 0;
+      }
+
+      .rule b {
+        color: var(--sun);
+        font-size: 13px;
+        font-weight: 710;
+      }
+
+      .rule span {
+        color: rgba(244, 230, 196, 0.64);
+        font-size: 13px;
+      }
+
+      .rule::after {
+        background: rgba(244, 230, 196, 0.2);
+        content: "";
+        flex: 1;
+        height: 1px;
+      }
+
+      .choices {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .choice {
+        background: transparent;
+        border: 1px solid rgba(244, 230, 196, 0.28);
+        color: inherit;
+        cursor: pointer;
+        min-height: 92px;
+        padding: 15px 16px;
+        position: relative;
+        text-align: left;
+        transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+      }
+
+      .choice::before {
+        background: var(--sun);
+        content: "";
+        height: 100%;
+        left: 0;
+        position: absolute;
+        top: 0;
+        transform: scaleY(0);
+        transform-origin: bottom;
+        transition: transform 160ms ease;
+        width: 4px;
+      }
+
+      .choice:hover,
+      .choice:focus-visible { border-color: var(--sun); outline: none; transform: translateY(-2px); }
+      .choice:focus-visible { box-shadow: 0 0 0 3px rgba(238, 164, 58, 0.33); }
+      .choice[aria-pressed="true"] { background: rgba(244, 230, 196, 0.1); border-color: var(--sun); }
+      .choice[aria-pressed="true"]::before { transform: scaleY(1); }
+
+      .choice strong { display: block; font-size: 17px; font-weight: 720; }
+      .choice span { color: rgba(244, 230, 196, 0.68); display: block; font-size: 13px; line-height: 1.45; margin-top: 5px; }
+
+      .board { margin-top: 28px; }
+
+      .panel {
+        display: none;
+        gap: 26px;
+        grid-template-columns: minmax(250px, 0.85fr) minmax(330px, 1.15fr) minmax(250px, 0.85fr);
+      }
+
+      .panel.is-active { display: grid; }
+
+      .explanation {
+        border-top: 3px solid var(--sun);
+        padding-top: 15px;
+      }
+
+      .explanation h2 { font-size: 24px; font-weight: 730; line-height: 1.18; }
+      .explanation > p { color: rgba(244, 230, 196, 0.76); font-size: 14px; line-height: 1.7; margin-top: 10px; }
+
+      .notes { border-top: 1px solid rgba(244, 230, 196, 0.3); margin-top: 30px; padding-top: 15px; }
+      .note { margin-bottom: 17px; }
+      .note b { color: var(--sun); display: block; font-size: 12px; font-weight: 720; }
+      .note span { color: rgba(244, 230, 196, 0.74); display: block; font-size: 13px; line-height: 1.5; margin-top: 4px; }
+
+      .canvas {
+        align-items: center;
+        background: #ded8bd;
+        display: flex;
+        justify-content: center;
+        min-height: 670px;
+        overflow: hidden;
+        padding: 32px;
+        position: relative;
+      }
+
+      .canvas::after {
+        border: 1px solid rgba(23, 34, 30, 0.3);
+        content: "";
+        inset: 13px;
+        pointer-events: none;
+        position: absolute;
+      }
+
+      .phone {
+        background: var(--paper);
+        box-shadow: 14px 18px 0 rgba(23, 34, 30, 0.16), 0 22px 38px rgba(23, 34, 30, 0.22);
+        color: var(--ink);
+        height: 590px;
+        overflow: hidden;
+        position: relative;
+        width: 310px;
+      }
+
+      .phone::before {
+        background: var(--ink);
+        border-radius: 0 0 10px 10px;
+        content: "";
+        height: 20px;
+        left: calc(50% - 48px);
+        position: absolute;
+        top: 0;
+        width: 96px;
+        z-index: 5;
+      }
+
+      .status {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 710;
+        justify-content: space-between;
+        padding: 12px 17px 0;
+        position: relative;
+        z-index: 3;
+      }
+
+      .phone button { cursor: pointer; }
+
+      .today-poster { background: var(--paper); height: 100%; overflow: hidden; position: relative; }
+
+      .today-sky { background: var(--lake); height: 250px; left: 0; position: absolute; right: 0; top: 0; }
+      .today-sun { background: var(--sun); border-radius: 50%; height: 95px; position: absolute; right: 28px; top: 59px; width: 95px; }
+      .ridge { bottom: 0; position: absolute; width: 115%; }
+      .ridge-a { background: var(--fir); height: 175px; left: -10%; clip-path: polygon(0 75%, 17% 38%, 34% 58%, 48% 10%, 66% 52%, 80% 25%, 100% 67%, 100% 100%, 0 100%); }
+      .ridge-b { background: var(--night); height: 132px; left: -8%; clip-path: polygon(0 85%, 15% 38%, 30% 64%, 46% 15%, 62% 57%, 75% 33%, 100% 70%, 100% 100%, 0 100%); }
+      .route-line { border-left: 2px solid var(--sun); bottom: 120px; height: 190px; left: 150px; position: absolute; transform: rotate(25deg); transform-origin: bottom; }
+      .route-line::before, .route-line::after { background: var(--sun); border: 2px solid var(--night); border-radius: 50%; content: ""; height: 9px; left: -5px; position: absolute; width: 9px; }
+      .route-line::before { top: -3px; }
+      .route-line::after { bottom: -3px; }
+
+      .today-content { bottom: 0; left: 0; padding: 20px 18px 18px; position: absolute; right: 0; z-index: 3; }
+      .today-content h3 { color: var(--paper); font-size: 28px; font-weight: 760; line-height: 1.05; max-width: 230px; }
+      .today-content p { color: rgba(244, 230, 196, 0.85); font-size: 12px; line-height: 1.45; margin-top: 8px; }
+      .route-label { align-items: center; display: flex; gap: 7px; margin: 18px 0 13px; }
+      .route-label b { color: var(--sun); font-size: 11px; }
+      .route-label span { color: var(--paper); font-size: 11px; }
+      .start-btn { background: var(--sun); border: 0; color: var(--ink); font-size: 14px; font-weight: 760; padding: 13px 14px; text-align: left; width: 100%; }
+      .start-btn:hover { background: #f6ba5b; }
+
+      .report-poster { background: var(--paper); height: 100%; overflow: hidden; position: relative; }
+      .report-sky { background: var(--lake); height: 220px; left: 0; position: absolute; right: 0; top: 0; }
+      .report-sun { background: var(--sun); border-radius: 50%; height: 124px; left: 93px; position: absolute; top: 46px; width: 124px; }
+      .report-mountain-one { background: var(--fir); bottom: 188px; height: 252px; left: -15px; position: absolute; right: -15px; clip-path: polygon(0 88%, 15% 42%, 30% 63%, 47% 2%, 65% 56%, 79% 23%, 100% 79%, 100% 100%, 0 100%); }
+      .report-mountain-two { background: var(--night); bottom: 171px; height: 205px; left: -10px; position: absolute; right: -10px; clip-path: polygon(0 92%, 16% 58%, 32% 72%, 51% 19%, 71% 67%, 86% 37%, 100% 77%, 100% 100%, 0 100%); }
+      .report-band { background: var(--clay); bottom: 136px; height: 54px; left: 0; position: absolute; right: 0; }
+      .report-copy { bottom: 0; left: 0; padding: 16px 18px 18px; position: absolute; right: 0; }
+      .report-copy h3 { font-size: 27px; font-weight: 770; line-height: 1.04; max-width: 246px; }
+      .report-copy > p { color: var(--quiet); font-size: 11px; margin-top: 5px; }
+      .facts { border-top: 1px solid var(--line); display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); margin-top: 14px; padding-top: 10px; }
+      .fact b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; font-weight: 760; }
+      .fact span { color: var(--quiet); display: block; font-size: 9px; margin-top: 2px; }
+
+      .stage-poster { background: var(--paper); height: 100%; overflow: hidden; position: relative; }
+      .stage-sky { background: var(--lake); height: 285px; left: 0; position: absolute; right: 0; top: 0; }
+      .stage-sun { background: var(--sun); border-radius: 50%; height: 152px; position: absolute; right: -31px; top: 48px; width: 152px; }
+      .stage-mountain-back { background: var(--fir); height: 273px; left: -18px; position: absolute; right: -18px; top: 136px; clip-path: polygon(0 82%, 16% 36%, 32% 60%, 49% 0, 64% 43%, 79% 18%, 100% 70%, 100% 100%, 0 100%); }
+      .stage-mountain-front { background: var(--night); height: 215px; left: -18px; position: absolute; right: -18px; top: 200px; clip-path: polygon(0 86%, 17% 48%, 31% 65%, 48% 11%, 65% 60%, 81% 29%, 100% 78%, 100% 100%, 0 100%); }
+      .stage-route { border-left: 2px solid var(--sun); height: 275px; left: 151px; position: absolute; top: 150px; transform: rotate(-14deg); transform-origin: bottom; }
+      .stage-route::before { background: var(--sun); border: 2px solid var(--night); border-radius: 50%; content: ""; height: 10px; left: -6px; position: absolute; top: 0; width: 10px; }
+      .stage-copy { background: var(--night); bottom: 0; left: 0; padding: 16px 18px 18px; position: absolute; right: 0; }
+      .stage-copy h3 { color: var(--paper); font-size: 27px; font-weight: 770; line-height: 1.02; max-width: 265px; }
+      .stage-copy > p { color: rgba(244, 230, 196, 0.85); font-size: 11px; line-height: 1.4; margin-top: 6px; }
+      .evidence-strip { border-top: 1px solid rgba(244, 230, 196, 0.36); display: flex; gap: 11px; margin-top: 12px; padding-top: 10px; }
+      .evidence-strip span { color: rgba(244, 230, 196, 0.92); font-size: 9px; line-height: 1.35; }
+      .evidence-strip b { color: var(--sun); display: block; font-size: 9px; margin-bottom: 2px; }
+
+      .evidence {
+        border-top: 1px solid rgba(244, 230, 196, 0.3);
+        padding-top: 15px;
+      }
+
+      .evidence h2 { font-size: 19px; font-weight: 720; line-height: 1.23; }
+      .evidence p { color: rgba(244, 230, 196, 0.74); font-size: 13px; line-height: 1.55; margin-top: 7px; }
+      .ladder { margin-top: 24px; }
+      .ladder-item { border-bottom: 1px solid rgba(244, 230, 196, 0.23); padding: 14px 0; }
+      .ladder-item:first-child { border-top: 1px solid rgba(244, 230, 196, 0.23); }
+      .ladder-item b { color: var(--sun); display: block; font-size: 12px; font-weight: 740; }
+      .ladder-item span { color: rgba(244, 230, 196, 0.84); display: block; font-size: 13px; line-height: 1.48; margin-top: 4px; }
+      .legend { color: rgba(244, 230, 196, 0.55); font-size: 12px; line-height: 1.6; margin-top: 18px; }
+
+      .approval {
+        align-items: center;
+        background: var(--sun);
+        color: var(--ink);
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        margin-top: 30px;
+        padding: 16px 18px;
+      }
+
+      .approval span { font-size: 14px; font-weight: 720; }
+      .approval button { background: var(--ink); border: 0; color: var(--paper); font-size: 13px; font-weight: 720; padding: 10px 13px; }
+      .approval button:hover { background: #2d3c35; }
+
+      @media (max-width: 900px) {
+        .panel { grid-template-columns: 1fr 1.08fr; }
+        .evidence { grid-column: 1 / -1; }
+      }
+
+      @media (max-width: 650px) {
+        .page { padding: 20px 16px 38px; }
+        .masthead { align-items: start; flex-direction: column; gap: 12px; }
+        .subhead { text-align: left; }
+        .choices { grid-template-columns: 1fr; }
+        .panel { grid-template-columns: 1fr; }
+        .canvas { min-height: 630px; padding: 20px; }
+        .phone { height: 572px; width: min(310px, 100%); }
+        .evidence { grid-column: auto; }
+        .approval { align-items: stretch; flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      THESIS: The national-park poster lives at different intensities across the product; it is evidence framing, not fitness advertising.
+      OWN-WORLD: Screen-printed teal, fir, sun and paper; hard-edged terrain, route lines, plain system type, evidence strips.
+      STORY: Compare where the poster grammar helps a gym user understand what happened without changing what the data means.
+      FIRST VIEWPORT: Three composition choices follow a compact rule, with the selected phone mockup between truthful usage notes.
+      FORM: Composition-probe board for a mobile-led Operate and Experience pair; seed 6179fda8; user selected WPA national-park poster world.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+    -->
+    <main class="page">
+      <header class="masthead">
+        <h1>不是宣传画，<br />是带回来的训练证据。</h1>
+        <p class="subhead">国家公园路线海报的气质保留给“值得记住的阶段”；日常训练仍然让用户先看懂该做什么。三种构图分别验证海报语言应该停在何处。</p>
+      </header>
+
+      <div class="rule"><b>构图探索</b><span>同一视觉世界，不同的表达强度</span></div>
+
+      <section class="choices" aria-label="选择要查看的构图">
+        <button class="choice" data-panel="today" aria-pressed="true">
+          <strong>01 路标优先</strong>
+          <span>海报退到背景，日常训练只保留方向感。</span>
+        </button>
+        <button class="choice" data-panel="report" aria-pressed="false">
+          <strong>02 现场简报</strong>
+          <span>单次训练结束时，生成一份可以分享的事实记录。</span>
+        </button>
+        <button class="choice" data-panel="stage" aria-pressed="false">
+          <strong>03 阶段远景</strong>
+          <span>只有阶段达成才完整使用路线海报的叙事力量。</span>
+        </button>
+      </section>
+
+      <section class="board" aria-live="polite">
+        <article class="panel is-active" data-id="today">
+          <section class="explanation">
+            <h2>今天先看下一步，<br />海报只是地平线。</h2>
+            <p>用户在健身房里需要的是明确行动，而不是被鼓舞后再寻找按钮。路线、山脊和太阳只用于建立方向与停留感。</p>
+            <div class="notes">
+              <div class="note"><b>适用页面</b><span>今天、训练开始、计划调整。</span></div>
+              <div class="note"><b>海报所做的事</b><span>给当前 Mission 一个可感知的“前方”，不替代训练目标或风险说明。</span></div>
+              <div class="note"><b>必须避免</b><span>巨型口号、夸张完成感、把单次训练称作跨越。</span></div>
+            </div>
+          </section>
+
+          <section class="canvas" aria-label="今天页面样稿">
+            <div class="phone">
+              <div class="today-poster">
+                <div class="today-sky"></div><div class="today-sun"></div>
+                <div class="ridge ridge-a"></div><div class="ridge ridge-b"></div><div class="route-line"></div>
+                <div class="status"><span>星期四</span><span>18:32</span></div>
+                <div class="today-content">
+                  <h3>下肢路径<br />第 4 次出发</h3>
+                  <p>55 分钟可用 · 精力稳定</p>
+                  <div class="route-label"><b>●</b><span>已完成 3 / 8 次可比较训练</span></div>
+                  <button class="start-btn" type="button">开始完整训练</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="evidence">
+            <h2>证据规则</h2>
+            <p>首页只能使用“当前状态”和“下一步”这类操作性信息。画面没有资格暗示用户已经变得更强。</p>
+            <div class="ladder">
+              <div class="ladder-item"><b>事实</b><span>已完成 3 / 8 次训练，今天可用 55 分钟。</span></div>
+              <div class="ladder-item"><b>系统建议</b><span>基于上次完成度，推荐完整版本。</span></div>
+              <div class="ladder-item"><b>用户决定</b><span>可改为 25 分钟短版或恢复版。</span></div>
+            </div>
+          </section>
+        </article>
+
+        <article class="panel" data-id="report">
+          <section class="explanation">
+            <h2>训练结束后，<br />给一次真实的现场简报。</h2>
+            <p>它可以被分享，但第一眼先读到的是发生了什么。景观负责仪式感，事实负责不失真。</p>
+            <div class="notes">
+              <div class="note"><b>适用页面</b><span>训练完成、训练日志、单次分享卡。</span></div>
+              <div class="note"><b>海报所做的事</b><span>把一小时训练变成一张有时间、地点与证据的“野外记录”。</span></div>
+              <div class="note"><b>必须避免</b><span>夸大消耗、以心率或体重给人贴胜负标签。</span></div>
+            </div>
+          </section>
+
+          <section class="canvas" aria-label="训练完成简报样稿">
+            <div class="phone">
+              <div class="report-poster">
+                <div class="report-sky"></div><div class="report-sun"></div>
+                <div class="report-mountain-one"></div><div class="report-mountain-two"></div><div class="report-band"></div>
+                <div class="status"><span>训练记录</span><span>2026.08.14</span></div>
+                <div class="report-copy">
+                  <h3>完成了今天的<br />下肢训练</h3>
+                  <p>室内力量训练 · 59 分钟</p>
+                  <div class="facts">
+                    <div class="fact"><b>5</b><span>完成动作</span></div>
+                    <div class="fact"><b>17</b><span>记录训练组</span></div>
+                    <div class="fact"><b>1</b><span>已标记调整</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="evidence">
+            <h2>分享卡的阅读顺序</h2>
+            <p>“完成”只陈述行为，不附带“燃脂”“蜕变”“超越”等未经证实的含义。可分享不等于必须对外证明自己。</p>
+            <div class="ladder">
+              <div class="ladder-item"><b>事实</b><span>59 分钟、5 个动作、17 组记录，1 处主动调整。</span></div>
+              <div class="ladder-item"><b>观察</b><span>腿举与上一次在相近重量区间完成。</span></div>
+              <div class="ladder-item"><b>仍待确认</b><span>一次训练不足以判断下肢能力是否提升。</span></div>
+            </div>
+          </section>
+        </article>
+
+        <article class="panel" data-id="stage">
+          <section class="explanation">
+            <h2>真正完整的海报，<br />留给一个阶段的证据。</h2>
+            <p>这是产品最独特的情绪价值：不是庆祝“坚持打卡”，而是认真标记一段已被训练、体感和复盘共同支持的路。</p>
+            <div class="notes">
+              <div class="note"><b>适用页面</b><span>Mission 完成、四到六周复盘、可选分享海报。</span></div>
+              <div class="note"><b>海报所做的事</b><span>承载旅程感、可收藏性与对下一段的期待。</span></div>
+              <div class="note"><b>必须避免</b><span>把尚未验证的变化印成结论，或让外形成为唯一纪念内容。</span></div>
+            </div>
+          </section>
+
+          <section class="canvas" aria-label="阶段成果海报样稿">
+            <div class="phone">
+              <div class="stage-poster">
+                <div class="stage-sky"></div><div class="stage-sun"></div>
+                <div class="stage-mountain-back"></div><div class="stage-mountain-front"></div><div class="stage-route"></div>
+                <div class="status"><span>阶段记录</span><span>MISSION 03</span></div>
+                <div class="stage-copy">
+                  <h3>完成 8 次可比较的<br />下肢训练</h3>
+                  <p>下肢能力建立 · 2026.07.01 - 2026.08.14</p>
+                  <div class="evidence-strip">
+                    <span><b>已观察到</b>腿举表现更稳定</span>
+                    <span><b>仍待确认</b>体重趋势不足下结论</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="evidence">
+            <h2>阶段海报的硬约束</h2>
+            <p>只有当一个阶段拥有足够的可比较记录时，海报才能宣告“完成”。它必须留下不确定性，并把下一步交还给用户。</p>
+            <div class="ladder">
+              <div class="ladder-item"><b>已验证变化</b><span>完成 8 次训练；腿举在相近区间的完成度更稳定。</span></div>
+              <div class="ladder-item"><b>解释边界</b><span>不判断体脂、外形或健康状况，也不把稳定直接等同于变强。</span></div>
+              <div class="ladder-item"><b>下一段路线</b><span>由用户选择：继续积累、尝试小幅加重，或先做恢复周。</span></div>
+            </div>
+            <p class="legend">“事实 / 观察 / 仍待确认 / 用户决定”会成为所有复盘与分享产物的固定图例。</p>
+          </section>
+        </article>
+      </section>
+
+      <div class="approval">
+        <span id="approval-copy">当前查看：01 路标优先</span>
+        <button id="approve" type="button">标记为首要构图</button>
+      </div>
+    </main>
+
+    <script>
+      const names = { today: "01 路标优先", report: "02 现场简报", stage: "03 阶段远景" };
+      const choices = [...document.querySelectorAll(".choice")];
+      const panels = [...document.querySelectorAll(".panel")];
+      const approvalCopy = document.querySelector("#approval-copy");
+      const approve = document.querySelector("#approve");
+      let selected = "today";
+
+      function switchPanel(id) {
+        selected = id;
+        choices.forEach((choice) => choice.setAttribute("aria-pressed", String(choice.dataset.panel === id)));
+        panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.id === id));
+        approvalCopy.textContent = `当前查看：${names[id]}`;
+        approve.textContent = "标记为首要构图";
+      }
+
+      choices.forEach((choice) => choice.addEventListener("click", () => switchPanel(choice.dataset.panel)));
+      approve.addEventListener("click", () => {
+        approve.textContent = `已标记：${names[selected]}`;
+        approvalCopy.textContent = `首要构图：${names[selected]}（仅保存于本次样稿）`;
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,214 @@
+<div id="fitness-visual-direction">
+  <style>
+    #fitness-visual-direction {
+      background: #f7f8f5;
+      color: #18231f;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+      line-height: 1.45;
+      padding: 28px;
+    }
+    #fitness-visual-direction * { box-sizing: border-box; }
+    #fitness-visual-direction .topline {
+      align-items: baseline;
+      border-bottom: 1px solid #cfd6cd;
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      padding-bottom: 18px;
+    }
+    #fitness-visual-direction h1,
+    #fitness-visual-direction h2,
+    #fitness-visual-direction p { margin: 0; }
+    #fitness-visual-direction h1 { font-size: 28px; font-weight: 650; letter-spacing: 0; }
+    #fitness-visual-direction .eyebrow {
+      color: #2a765f;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+    }
+    #fitness-visual-direction .intro {
+      color: #425149;
+      font-size: 15px;
+      max-width: 760px;
+      padding: 22px 0 25px;
+    }
+    #fitness-visual-direction .grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: minmax(250px, .82fr) minmax(360px, 1.18fr) minmax(250px, .82fr);
+    }
+    #fitness-visual-direction .section-label {
+      color: #6f7d75;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    #fitness-visual-direction .direction {
+      border-top: 3px solid #2a765f;
+      padding-top: 14px;
+    }
+    #fitness-visual-direction .direction h2 { font-size: 20px; font-weight: 650; }
+    #fitness-visual-direction .direction p { color: #506057; font-size: 14px; margin-top: 8px; }
+    #fitness-visual-direction .words {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 17px;
+    }
+    #fitness-visual-direction .word {
+      border: 1px solid #bfcabf;
+      color: #34443b;
+      font-size: 12px;
+      padding: 5px 8px;
+    }
+    #fitness-visual-direction .swatches { display: grid; gap: 8px; grid-template-columns: repeat(2, 1fr); margin-top: 24px; }
+    #fitness-visual-direction .swatch { border: 1px solid #d3dbd3; min-height: 58px; padding: 8px; }
+    #fitness-visual-direction .swatch b { display: block; font-size: 11px; font-weight: 650; }
+    #fitness-visual-direction .swatch span { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; margin-top: 3px; }
+    #fitness-visual-direction .paper { background: #f7f8f5; }
+    #fitness-visual-direction .ink { background: #18231f; color: #f7f8f5; }
+    #fitness-visual-direction .jade { background: #2a765f; color: #ffffff; }
+    #fitness-visual-direction .coral { background: #d75c4a; color: #ffffff; }
+    #fitness-visual-direction .scene {
+      background: #e9ede7;
+      min-height: 510px;
+      overflow: hidden;
+      padding: 18px;
+      position: relative;
+    }
+    #fitness-visual-direction .terrain { bottom: -112px; height: 330px; left: -90px; opacity: .58; position: absolute; transform: rotate(-12deg); width: 620px; }
+    #fitness-visual-direction .terrain i { border: 1px solid #a8b8a9; border-radius: 50%; display: block; left: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); }
+    #fitness-visual-direction .terrain i:nth-child(1) { height: 110px; width: 190px; }
+    #fitness-visual-direction .terrain i:nth-child(2) { height: 160px; width: 265px; }
+    #fitness-visual-direction .terrain i:nth-child(3) { height: 215px; width: 345px; }
+    #fitness-visual-direction .terrain i:nth-child(4) { height: 272px; width: 430px; }
+    #fitness-visual-direction .phone-row { display: flex; gap: 16px; justify-content: center; position: relative; z-index: 1; }
+    #fitness-visual-direction .phone {
+      background: #f7f8f5;
+      border: 1px solid #c9d1c9;
+      box-shadow: 0 14px 30px rgba(24, 35, 31, .12);
+      min-height: 455px;
+      padding: 17px;
+      width: 224px;
+    }
+    #fitness-visual-direction .phone.training { background: #18231f; border-color: #2a453c; color: #f5f7f3; }
+    #fitness-visual-direction .phone-top { align-items: center; display: flex; font-size: 11px; justify-content: space-between; }
+    #fitness-visual-direction .phone-title { font-size: 19px; font-weight: 650; margin-top: 28px; }
+    #fitness-visual-direction .mission { border-top: 1px solid #b7c5b9; margin-top: 17px; padding-top: 12px; }
+    #fitness-visual-direction .mission small { color: #63736a; display: block; font-size: 10px; }
+    #fitness-visual-direction .training .mission { border-color: #456458; }
+    #fitness-visual-direction .training .mission small { color: #a9c1b4; }
+    #fitness-visual-direction .mission strong { display: block; font-size: 14px; font-weight: 620; margin-top: 5px; }
+    #fitness-visual-direction .proof { color: #63736a; font-size: 11px; margin-top: 5px; }
+    #fitness-visual-direction .training .proof { color: #b8c9be; }
+    #fitness-visual-direction .next { background: #2a765f; color: #ffffff; font-size: 13px; font-weight: 650; margin-top: 28px; padding: 11px 12px; }
+    #fitness-visual-direction .alternative { color: #425149; font-size: 11px; margin-top: 10px; }
+    #fitness-visual-direction .training .alternative { color: #d4dfd6; }
+    #fitness-visual-direction .exercise { border-bottom: 1px solid #40574e; padding: 13px 0; }
+    #fitness-visual-direction .exercise b { display: block; font-size: 13px; }
+    #fitness-visual-direction .exercise span { color: #b9c9bf; display: block; font-size: 11px; margin-top: 4px; }
+    #fitness-visual-direction .set-row { color: #e0e9e2; display: flex; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; justify-content: space-between; margin-top: 10px; }
+    #fitness-visual-direction .key { border-top: 1px solid #cfd6cd; padding-top: 14px; }
+    #fitness-visual-direction .key-item { margin: 0 0 15px; }
+    #fitness-visual-direction .key-item b { display: block; font-size: 13px; font-weight: 650; }
+    #fitness-visual-direction .key-item span { color: #5d6c63; display: block; font-size: 12px; margin-top: 3px; }
+    #fitness-visual-direction .type-sample { border-bottom: 1px solid #cfd6cd; margin-top: 25px; padding-bottom: 16px; }
+    #fitness-visual-direction .large-number { font-variant-numeric: tabular-nums; font-size: 36px; font-weight: 680; line-height: 1; }
+    #fitness-visual-direction .small-number { color: #587469; font-size: 12px; margin-top: 6px; }
+    @media (max-width: 820px) {
+      #fitness-visual-direction { padding: 18px; }
+      #fitness-visual-direction .grid { grid-template-columns: 1fr; }
+      #fitness-visual-direction .scene { min-height: 480px; }
+    }
+    @media (max-width: 490px) {
+      #fitness-visual-direction .topline { align-items: flex-start; flex-direction: column; gap: 6px; }
+      #fitness-visual-direction .phone-row { gap: 8px; }
+      #fitness-visual-direction .phone { min-height: 420px; padding: 13px; width: calc(50% - 4px); }
+      #fitness-visual-direction .phone-title { font-size: 17px; }
+      #fitness-visual-direction .mission strong { font-size: 13px; }
+    }
+  </style>
+  <div class="topline">
+    <div>
+      <div class="eyebrow">Fitness Growth System</div>
+      <h1>安静成长导航</h1>
+    </div>
+    <div class="eyebrow">Visual Direction v0.1</div>
+  </div>
+  <p class="intro">清晰的训练判断，低刺激的长期陪伴，带有材质与路径感的成长体验。用户应看见方向，而不是被数据、课程或游戏奖励驱赶。</p>
+  <div class="grid">
+    <section class="direction">
+      <div class="section-label">Direction</div>
+      <h2>秩序里有地形</h2>
+      <p>留白与精准信息让训练可靠；低饱和自然材质与路径刻度，让进展拥有空间和分量。</p>
+      <div class="words">
+        <span class="word">笃定</span>
+        <span class="word">舒展</span>
+        <span class="word">诚实</span>
+        <span class="word">有分量</span>
+        <span class="word">非评判</span>
+      </div>
+      <div class="swatches">
+        <div class="swatch paper"><b>Paper</b><span>#F7F8F5</span></div>
+        <div class="swatch ink"><b>Ink</b><span>#18231F</span></div>
+        <div class="swatch jade"><b>Jade</b><span>#2A765F</span></div>
+        <div class="swatch coral"><b>Coral</b><span>#D75C4A</span></div>
+      </div>
+      <div class="type-sample">
+        <div class="large-number">08 680 kg</div>
+        <div class="small-number">数字是证据，不是结论。</div>
+      </div>
+    </section>
+    <section class="scene" aria-label="两张训练产品界面的视觉样稿">
+      <div class="terrain" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="phone-row">
+        <div class="phone">
+          <div class="phone-top"><span>星期四</span><span>当前阶段 03</span></div>
+          <div class="phone-title">今天，继续下肢路径</div>
+          <div class="mission">
+            <small>当前 MISSION</small>
+            <strong>建立可比较的下肢训练证据</strong>
+            <div class="proof">已完成 3 / 8 次训练</div>
+          </div>
+          <div class="mission">
+            <small>今天的状态</small>
+            <strong>55 分钟可用 · 精力稳定</strong>
+            <div class="proof">完整训练或 25 分钟短版</div>
+          </div>
+          <div class="next">开始完整训练</div>
+          <div class="alternative">为什么推荐这一节？查看训练理由</div>
+        </div>
+        <div class="phone training">
+          <div class="phone-top"><span>训练中</span><span>32:18</span></div>
+          <div class="phone-title">腿举</div>
+          <div class="mission">
+            <small>本组目标</small>
+            <strong>80 kg · 8-10 次</strong>
+            <div class="proof">上次可比表现：80 kg x 10</div>
+          </div>
+          <div class="exercise">
+            <b>第 3 组</b>
+            <span>记录实际表现与主观难度</span>
+            <div class="set-row"><span>80 kg</span><span>08 次</span><span>偏难</span></div>
+          </div>
+          <div class="exercise">
+            <b>需要调整？</b>
+            <span>换动作 · 降载 · 标记不适</span>
+          </div>
+          <div class="alternative">系统会在复盘时解释本次调整的影响</div>
+        </div>
+      </div>
+    </section>
+    <section class="key">
+      <div class="section-label">Rules</div>
+      <div class="key-item"><b>事实先于建议</b><span>训练量、表现、体感的来源必须明确。</span></div>
+      <div class="key-item"><b>一个首要行动</b><span>首页给下一步，而不是 KPI 墙。</span></div>
+      <div class="key-item"><b>地形不是等级</b><span>路径由真实能力与阶段证据构成。</span></div>
+      <div class="key-item"><b>风险清晰可见</b><span>疼痛和高风险状态不使用奖励化表达。</span></div>
+      <div class="key-item"><b>训练模式高对比</b><span>深墨绿色减少刺眼感，确保现场可读。</span></div>
+    </section>
+  </div>
+</div>

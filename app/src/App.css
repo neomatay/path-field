@@ -1,0 +1,770 @@
+/* PATH / FIELD 视觉令牌取自 DESIGN.md（paper / ink / fir / sun）
+   排版系统移植自 park-poster-field-report：浓缩展示字体、硬印刷规则线、内嵌纸面边框 */
+.app {
+  --paper: #f1e2b8;
+  --paper-low: #e3cfa0;
+  --ink: #1c2a23;
+  --forest: #205a3e;
+  --sun: #eca93d;
+  --display: 'Arial Narrow', 'Avenir Next Condensed', -apple-system, 'PingFang SC', sans-serif;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
+  padding: 25px 27px 20px;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* 印刷品的内嵌细边框：贴住纸面随内容滚动，不悬浮在屏幕上 */
+.app::after {
+  border: 1px solid rgba(28, 42, 35, 0.5);
+  content: '';
+  position: absolute;
+  inset: 9px;
+  pointer-events: none;
+}
+
+.topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(28, 42, 35, 0.55);
+  box-shadow: 0 4px 0 -3px rgba(28, 42, 35, 0.55);
+  padding-bottom: 10px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 0;
+}
+
+.mission h1 {
+  font-family: var(--display);
+  font-size: clamp(28px, 8.4vw, 38px);
+  font-weight: 900;
+  line-height: 1.02;
+  margin: 8px 0 4px;
+}
+
+/* 印刷规则线：两段横线 + 菱形，取自海报的 copy-rule */
+.mission-rule {
+  height: 2px;
+  background: var(--forest);
+  width: 72%;
+  margin: 12px 0 10px;
+  position: relative;
+}
+
+.mission-rule::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -3.5px;
+  width: 9px;
+  height: 9px;
+  background: var(--forest);
+  transform: rotate(45deg);
+}
+
+.body {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.rules ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.rules li {
+  font-size: 13px;
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 7px;
+}
+
+.primary {
+  background: var(--forest);
+  color: var(--paper);
+  border: none;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+}
+
+.footnote {
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* ---------- 状态检查 chips ---------- */
+
+.today,
+.training,
+.receipt {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.today section,
+.training section,
+.receipt section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.chip {
+  background: var(--paper-low);
+  color: var(--ink);
+  border: 1px solid rgba(28, 42, 35, 0.28);
+  padding: 10px 11px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chip.selected {
+  background: var(--sun);
+  font-weight: 700;
+}
+
+/* ---------- 安全提示 ---------- */
+
+.safety {
+  padding: 10px 11px;
+  border-top: 3px solid #be6038;
+  background: rgba(190, 96, 56, 0.08);
+  font-size: 14px;
+}
+
+.safety.urgent {
+  border-top-color: #be6038;
+  background: rgba(190, 96, 56, 0.16);
+  font-weight: 600;
+}
+
+/* ---------- 版本选择 ---------- */
+
+.variants {
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 14px;
+}
+
+.variant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.variant {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--paper-low);
+  color: var(--ink);
+  border: 1px solid rgba(28, 42, 35, 0.28);
+  padding: 14px 11px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.variant.selected {
+  outline: 2px solid var(--forest);
+  background: #eee0c4;
+}
+
+.variant:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.variant-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.variant-meta {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.unknowns {
+  font-size: 12px;
+  opacity: 0.7;
+  font-style: normal;
+}
+
+.meta {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* ---------- 计划预览 / 历史 ---------- */
+
+.plan-preview ul,
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+}
+
+.plan-preview li,
+.history li {
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 7px;
+}
+
+/* ---------- 训练执行 ---------- */
+
+.block {
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.block.skipped {
+  opacity: 0.55;
+}
+
+.block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.block-head h2 {
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.set-grid {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr 1fr;
+  gap: 7px;
+  align-items: center;
+}
+
+.set-grid.head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.set-grid input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(28, 42, 35, 0.28);
+  padding: 9px 7px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.block-actions,
+.subs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.subs {
+  flex-direction: column;
+  align-items: flex-start;
+  border-top: 1px dashed rgba(28, 42, 35, 0.3);
+  padding-top: 8px;
+}
+
+/* ---------- 按钮 ---------- */
+
+.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid rgba(28, 42, 35, 0.28);
+  padding: 8px 11px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ghost.small {
+  align-self: flex-start;
+  padding: 6px 9px;
+  font-size: 12px;
+}
+
+/* ---------- 收据 ---------- */
+
+.receipt h1 {
+  font-family: var(--display);
+  font-size: clamp(28px, 8.4vw, 38px);
+  font-weight: 900;
+  line-height: 1.02;
+  margin: 0;
+}
+
+.evidence {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+}
+
+.evidence li {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 7px;
+}
+
+/* 证据几何标记（DESIGN.md：ring=事实 / ring+sun=观察 / diamond=待确认） */
+.marker {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  display: inline-block;
+}
+
+.marker.ring {
+  border: 2px solid var(--forest);
+  border-radius: 50%;
+}
+
+.marker.ring-dot {
+  border: 2px solid var(--forest);
+  border-radius: 50%;
+  position: relative;
+}
+
+.marker.ring-dot::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  background: var(--sun);
+}
+
+.marker.diamond {
+  background: none;
+  border: 2px solid var(--sun);
+  transform: rotate(45deg);
+}
+
+.next-step {
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 11px;
+}
+
+.recovery-note {
+  border-top: 3px solid var(--forest);
+  padding-top: 11px;
+}
+
+/* ---------- 底部导航 ---------- */
+
+.tabs {
+  display: flex;
+  border-top: 1px solid rgba(28, 42, 35, 0.55);
+  margin-top: 8px;
+}
+
+.tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 13px 0 11px;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  opacity: 0.6;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.tab.selected {
+  opacity: 1;
+  border-bottom-color: var(--forest);
+}
+
+/* ---------- 路线主视觉（地图日记） ---------- */
+
+.route-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.park-art {
+  margin: 0;
+  position: relative;
+  border: 1px solid rgba(29, 42, 36, 0.5);
+  background: #087c80;
+  height: 300px;
+  overflow: hidden;
+}
+
+.park-art canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.park-art figcaption {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.route-status {
+  font-size: 13px;
+}
+
+/* ---------- 旅程页 ---------- */
+
+.journey {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.journey section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* 邮戳式印章框：全边框而非单侧色条，呼应"Mission 印章"与海报语言 */
+.mission-stamp {
+  border: 1.5px solid var(--forest);
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.mission-stamp h1 {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.08;
+  margin: 2px 0 4px;
+}
+
+.stamp-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.stamp-rows ul {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.stamp-rows li {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.tag {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border: 1px solid;
+}
+
+.tag.fact {
+  color: var(--forest);
+  border-color: var(--forest);
+}
+
+.tag.obs {
+  color: var(--ink);
+  border-color: var(--sun);
+  background: rgba(236, 169, 61, 0.18);
+}
+
+.session-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-card {
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(28, 42, 35, 0.22);
+  padding: 13px 14px;
+}
+
+.session-card h2 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 小方形标记替代色条，与证据几何语言一致 */
+.session-card h2::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex: none;
+  background: var(--sun);
+}
+
+.session-card ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.variant-info {
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 10px;
+}
+
+.plain-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+}
+
+.plain-list li {
+  border-top: 1px solid rgba(28, 42, 35, 0.18);
+  padding-top: 7px;
+}
+
+/* ---------- 记录页 ---------- */
+
+.records {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.records > .mission h1 {
+  font-size: 28px;
+}
+
+.record-card {
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(28, 42, 35, 0.22);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.record-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.record-head h2 {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.record-card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note {
+  border-top: 1px dashed rgba(28, 42, 35, 0.3);
+  padding-top: 7px;
+}
+
+/* ---------- 训练引导 ---------- */
+
+.cues {
+  font-size: 13px;
+  line-height: 1.55;
+  background: rgba(32, 90, 62, 0.07);
+  border: 1px solid rgba(32, 90, 62, 0.25);
+  padding: 8px 10px;
+  margin: 0;
+}
+
+.last-ref {
+  font-size: 13px;
+  opacity: 0.9;
+  background: rgba(236, 169, 61, 0.12);
+  border: 1px solid rgba(236, 169, 61, 0.4);
+  padding: 6px 10px;
+  margin: 0;
+}
+
+.subs .chips {
+  margin-top: 2px;
+}
+
+.chip.subbed {
+  background: var(--forest);
+  color: var(--paper);
+  border-color: var(--forest);
+}
+
+/* ---------- 入口选择 ---------- */
+
+.entry-hero h1 {
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.entry-q {
+  margin-top: 4px;
+}
+
+.path-card {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(28, 42, 35, 0.22);
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+
+.path-card:hover,
+.path-card:active {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: var(--forest);
+}
+
+.path-no {
+  flex: none;
+  width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 820;
+  color: var(--forest);
+  border: 1.5px solid var(--forest);
+}
+
+.path-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.path-name {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.path-meta {
+  font-size: 12px;
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.entry-note {
+  border-top: 1px solid rgba(28, 42, 35, 0.28);
+  padding-top: 11px;
+}
+
+/* ---------- 入口确认 ---------- */
+
+.entry-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.entry-actions .ghost {
+  padding: 12px;
+  font-size: 14px;
+}
+
+

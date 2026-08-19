@@ -1,0 +1,34 @@
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [
+    react(),
+    // 本地优先 PWA：离线可用 + 可安装到主屏幕（iOS 会清理未安装 PWA 的数据，见 ROADMAP 第 7 节）
+    VitePWA({
+      registerType: 'prompt',
+      manifest: {
+        name: 'PATH Field',
+        short_name: 'PATH',
+        description: '理解训练、安排下一步、并在中断后重新开始的健身成长工具',
+        theme_color: '#205a3e',
+        background_color: '#f1e2b8',
+        display: 'standalone',
+        icons: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png}'],
+      },
+    }),
+  ],
+  test: {
+    include: ['src/**/*.test.ts'],
+    environment: 'node',
+  },
+})

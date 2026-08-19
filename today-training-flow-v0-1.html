@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>今天与训练 - 操作流程 v0.1</title>
+    <style>
+      :root {
+        --paper: #f1e2b8;
+        --paper-low: #e3cfa0;
+        --ink: #1c2a23;
+        --forest: #1f593d;
+        --lake: #087b7d;
+        --sun: #eca93d;
+        --clay: #bf6335;
+        --mist: #d0d2b8;
+        --line: rgba(28, 42, 35, .28);
+        --deep: #142b27;
+      }
+      * { box-sizing: border-box; }
+      body { background: var(--deep); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif; letter-spacing: 0; margin: 0; }
+      button { font: inherit; }
+      button, a { -webkit-tap-highlight-color: transparent; }
+      h1, h2, h3, p { margin: 0; }
+      .outer { align-items: center; display: flex; justify-content: center; min-height: 100vh; padding: 26px; }
+      .app {
+        background: var(--paper);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+        min-height: 860px;
+        overflow: hidden;
+        position: relative;
+        width: min(100%, 440px);
+      }
+      .app::before { border: 1px solid rgba(28, 42, 35, .34); content: ""; inset: 9px; pointer-events: none; position: absolute; z-index: 9; }
+      .screen { display: none; min-height: 860px; padding: 26px 27px 30px; position: relative; }
+      .screen.is-active { display: flex; flex-direction: column; }
+      .status { align-items: center; display: flex; font-family: "Arial Narrow", "Avenir Next Condensed", -apple-system, sans-serif; font-size: 12px; font-weight: 760; justify-content: space-between; letter-spacing: .06em; text-transform: uppercase; }
+      .status .mark { align-items: center; display: flex; gap: 8px; }
+      .mark i { background: var(--forest); clip-path: polygon(50% 0, 100% 57%, 72% 57%, 100% 100%, 0 100%, 28% 57%, 0 57%); display: block; height: 22px; width: 20px; }
+      .back { align-items: center; background: transparent; border: 0; color: var(--ink); cursor: pointer; display: flex; font-size: 14px; gap: 7px; padding: 8px 0; }
+      .back::before { border-bottom: 1.5px solid currentColor; border-left: 1.5px solid currentColor; content: ""; height: 7px; transform: rotate(45deg); width: 7px; }
+
+      .today h1 { font-size: 35px; font-weight: 790; line-height: 1.08; margin-top: 28px; }
+      .today h1 span { color: var(--forest); }
+      .today-intro { color: #4b5d51; font-size: 14px; line-height: 1.58; margin-top: 8px; }
+      .route-scene { background: var(--lake); height: 188px; margin: 24px -27px 0; overflow: hidden; position: relative; }
+      #route-scene { height: 100%; width: 100%; }
+      .route-tag { background: var(--paper); bottom: 17px; color: var(--ink); font-size: 12px; font-weight: 750; left: 27px; padding: 9px 10px; position: absolute; }
+      .route-tag span { color: #536258; font-weight: 600; }
+      .mission { border-bottom: 1px solid var(--line); padding: 24px 0 20px; }
+      .section-kicker { color: var(--forest); font-size: 12px; font-weight: 780; }
+      .mission h2 { font-size: 23px; font-weight: 790; line-height: 1.2; margin-top: 7px; }
+      .mission p { color: #47584e; font-size: 13px; line-height: 1.55; margin-top: 5px; }
+      .evidence-line { align-items: flex-start; border-bottom: 1px solid var(--line); display: grid; gap: 11px; grid-template-columns: 17px 1fr; padding: 16px 0; }
+      .evidence-line:last-of-type { border-bottom: 0; }
+      .evidence-line .symbol { border: 1.5px solid var(--forest); border-radius: 50%; height: 14px; margin-top: 3px; position: relative; width: 14px; }
+      .evidence-line .symbol.observe::after { background: var(--sun); border-radius: 50%; content: ""; height: 5px; position: absolute; right: -3px; top: -3px; width: 5px; }
+      .evidence-line .symbol.decision { border-radius: 0; transform: rotate(45deg); }
+      .evidence-line b { color: var(--forest); display: block; font-size: 12px; font-weight: 780; }
+      .evidence-line span { display: block; font-size: 13px; line-height: 1.45; margin-top: 3px; }
+      .action-area { margin-top: auto; padding-top: 22px; }
+      .primary { background: var(--forest); border: 0; color: var(--paper); cursor: pointer; font-size: 15px; font-weight: 780; padding: 16px; text-align: left; width: 100%; }
+      .primary:hover, .primary:focus-visible { background: var(--ink); outline: 3px solid rgba(236, 169, 61, .65); outline-offset: 2px; }
+      .alternatives { display: grid; gap: 1px; grid-template-columns: 1fr 1fr; margin-top: 1px; }
+      .alternative { background: var(--paper-low); border: 0; color: var(--ink); cursor: pointer; font-size: 13px; padding: 14px 11px; text-align: left; }
+      .alternative:hover, .alternative:focus-visible { background: var(--sun); outline: none; }
+      .risk-link { background: transparent; border: 0; color: #7e382a; cursor: pointer; font-size: 13px; margin-top: 15px; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+
+      .training { background: var(--deep); color: #edf0dc; }
+      .training::after { border-color: rgba(241, 226, 184, .24); }
+      .training .status { color: #edf0dc; }
+      .training .mark i { background: var(--sun); }
+      .training-main { padding-top: 31px; }
+      .training-main h1 { color: var(--paper); font-size: 42px; font-weight: 800; letter-spacing: 0; line-height: 1; }
+      .training-main > p { color: #b9c4ad; font-size: 13px; line-height: 1.5; margin-top: 8px; }
+      .goal { border-bottom: 1px solid rgba(241, 226, 184, .28); border-top: 1px solid rgba(241, 226, 184, .28); display: grid; gap: 8px; grid-template-columns: 1fr 1fr; margin-top: 27px; padding: 16px 0; }
+      .goal b { color: var(--sun); display: block; font-size: 11px; }
+      .goal span { color: var(--paper); display: block; font-size: 17px; font-weight: 750; margin-top: 3px; }
+      .set-progress { display: flex; gap: 7px; margin: 23px 0 10px; }
+      .set-progress button { background: transparent; border: 1px solid rgba(241, 226, 184, .44); color: #e5ead5; cursor: pointer; font-size: 12px; height: 29px; width: 29px; }
+      .set-progress button.is-current { background: var(--sun); border-color: var(--sun); color: var(--ink); font-weight: 800; }
+      .set-progress button.is-done { background: var(--forest); border-color: var(--forest); }
+      .set-title { color: #b9c4ad; font-size: 13px; }
+      .measurements { border-top: 1px solid rgba(241, 226, 184, .28); margin-top: 18px; }
+      .measure { align-items: center; border-bottom: 1px solid rgba(241, 226, 184, .22); display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; min-height: 79px; }
+      .measure span { color: #cbd2bf; font-size: 13px; }
+      .measure output { color: var(--paper); font-size: 28px; font-variant-numeric: tabular-nums; font-weight: 780; min-width: 86px; text-align: right; }
+      .measure button { background: transparent; border: 1px solid rgba(241, 226, 184, .42); color: var(--paper); cursor: pointer; font-size: 19px; height: 35px; width: 35px; }
+      .measure button:hover, .measure button:focus-visible { background: var(--forest); border-color: var(--forest); outline: none; }
+      .rpe { border-bottom: 1px solid rgba(241, 226, 184, .22); padding: 18px 0 19px; }
+      .rpe > span { color: #cbd2bf; display: block; font-size: 13px; margin-bottom: 10px; }
+      .rpe-controls { display: grid; gap: 1px; grid-template-columns: repeat(3, 1fr); }
+      .rpe-controls button { background: #243d35; border: 0; color: #dce3d1; cursor: pointer; font-size: 13px; padding: 11px 8px; }
+      .rpe-controls button[aria-pressed="true"] { background: var(--sun); color: var(--ink); font-weight: 780; }
+      .training .action-area { padding-top: 23px; }
+      .training .primary { background: var(--sun); color: var(--ink); }
+      .training .primary:hover, .training .primary:focus-visible { background: #f3bd5e; }
+      .tools { display: grid; gap: 1px; grid-template-columns: 1fr 1fr; margin-top: 1px; }
+      .tools button { background: #28433a; border: 0; color: #dfe5d6; cursor: pointer; font-size: 13px; padding: 14px 10px; text-align: left; }
+      .tools button:hover, .tools button:focus-visible { background: #3a5549; outline: none; }
+
+      .finish { justify-content: center; }
+      .finish h1 { font-size: 36px; font-weight: 800; line-height: 1.08; margin-top: 42px; }
+      .finish h1 span { color: var(--forest); }
+      .finish p { color: #506057; font-size: 14px; line-height: 1.6; margin-top: 9px; }
+      .receipt { border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); margin-top: 33px; padding: 7px 0; }
+      .receipt-row { align-items: baseline; display: flex; justify-content: space-between; padding: 15px 0; }
+      .receipt-row + .receipt-row { border-top: 1px solid var(--line); }
+      .receipt-row span { color: #536259; font-size: 13px; }
+      .receipt-row b { font-size: 17px; font-variant-numeric: tabular-nums; }
+      .finish .observation { border-left: 3px solid var(--sun); color: #35483d; font-size: 14px; line-height: 1.55; margin-top: 26px; padding-left: 13px; }
+      .finish .action-area { margin-top: 35px; }
+
+      .sheet { background: var(--paper); border-top: 2px solid var(--clay); bottom: 0; box-shadow: 0 -14px 34px rgba(0,0,0,.18); display: none; left: 0; padding: 25px 27px 32px; position: absolute; right: 0; z-index: 15; }
+      .sheet.is-open { display: block; }
+      .sheet h2 { font-size: 21px; font-weight: 790; }
+      .sheet p { color: #4e5e54; font-size: 14px; line-height: 1.57; margin-top: 8px; }
+      .sheet button { background: var(--forest); border: 0; color: var(--paper); cursor: pointer; font-size: 14px; font-weight: 760; margin-top: 18px; padding: 12px 14px; }
+      @media (max-width: 520px) { .outer { display: block; padding: 0; } .app { min-height: 100vh; width: 100%; } .screen { min-height: 100vh; } .route-scene { height: 164px; } }
+    </style>
+  </head>
+  <body>
+    <!--
+      THESIS: Daily training is a calm field operation, not a poster or dashboard; route grammar frames a clear next action and its evidence.
+      OWN-WORLD: Warm paper, fir-green actions, deep training mode, fixed evidence dividers and a small topographic canvas instead of celebratory scenery.
+      STORY: The user knows what to do today and why, records a set quickly, adjusts safely, then sees an honest training receipt.
+      FIRST VIEWPORT: The mobile Today screen opens with the mission and a compact route field; evidence and one start action follow without scrolling across unrelated metrics.
+      FORM: Mobile training log flow for the selected national-park print world; seed 6179fda8.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+    -->
+    <main class="outer">
+      <section class="app" aria-label="健身产品今天与训练流程样稿">
+        <section class="screen today is-active" data-screen="today">
+          <header class="status"><span class="mark"><i aria-hidden="true"></i>Path / Today</span><span>周四 · 18:32</span></header>
+          <h1>今天，<span>继续走</span><br />下肢这段路。</h1>
+          <p class="today-intro">这里没有连续打卡。你只需要知道现在处在哪、下一步是否适合出发。</p>
+          <div class="route-scene" role="img" aria-label="一张小型路线地形图，显示已完成三次训练、今天是第四次"><canvas id="route-scene"></canvas><div class="route-tag">下肢能力建立 <span>· 3 / 8 次</span></div></div>
+          <section class="mission"><div class="section-kicker">今天的建议</div><h2>完整下肢训练 · 约 55 分钟</h2><p>或使用 25 分钟短版。两种选择都会留下可用于下次判断的记录。</p></section>
+          <section aria-label="推荐理由">
+            <div class="evidence-line"><i class="symbol" aria-hidden="true"></i><div><b>事实</b><span>距离上一次下肢训练 3 天；今天有 55 分钟可用。</span></div></div>
+            <div class="evidence-line"><i class="symbol observe" aria-hidden="true"></i><div><b>系统建议</b><span>上次完成度稳定，建议继续同一组动作以积累可比较表现。</span></div></div>
+            <div class="evidence-line"><i class="symbol decision" aria-hidden="true"></i><div><b>你可以决定</b><span>改为短版、替换动作，或先做恢复训练。</span></div></div>
+          </section>
+          <div class="action-area"><button class="primary" data-go="training" type="button">开始完整训练</button><div class="alternatives"><button class="alternative" type="button">改为 25 分钟短版</button><button class="alternative" type="button">查看训练理由</button></div><button class="risk-link" data-sheet="risk-sheet" type="button">有疼痛、不适或异常疲劳？</button></div>
+        </section>
+
+        <section class="screen training" data-screen="training">
+          <header class="status"><button class="back" data-go="today" type="button">结束训练</button><span class="mark"><i aria-hidden="true"></i>31:48</span></header>
+          <main class="training-main"><h1>腿举</h1><p>当前动作 2 / 5 · 更换动作不会抹去今天已经完成的记录。</p>
+            <section class="goal"><div><b>本组目标</b><span>80 kg · 8-10 次</span></div><div><b>上次可比表现</b><span>80 kg × 10</span></div></section>
+            <div class="set-progress" aria-label="训练组数"><button class="is-done" type="button">1</button><button class="is-done" type="button">2</button><button class="is-current" type="button">3</button><button type="button">4</button></div>
+            <p class="set-title">记录第 3 组的实际表现</p>
+            <section class="measurements">
+              <div class="measure"><span>重量</span><button data-change="weight" data-step="-5" type="button" aria-label="减少重量">-</button><output id="weight">80 kg</output><button data-change="weight" data-step="5" type="button" aria-label="增加重量">+</button></div>
+              <div class="measure"><span>次数</span><button data-change="reps" data-step="-1" type="button" aria-label="减少次数">-</button><output id="reps">8 次</output><button data-change="reps" data-step="1" type="button" aria-label="增加次数">+</button></div>
+            </section>
+            <section class="rpe"><span>主观难度</span><div class="rpe-controls"><button type="button" aria-pressed="false">偏轻松</button><button type="button" aria-pressed="true">合适</button><button type="button" aria-pressed="false">偏难</button></div></section>
+          </main>
+          <div class="action-area"><button class="primary" id="complete-set" type="button">完成第 3 组</button><div class="tools"><button type="button">替换动作</button><button data-sheet="pain-sheet" type="button">标记不适</button></div></div>
+        </section>
+
+        <section class="screen finish" data-screen="finish">
+          <header class="status"><span class="mark"><i aria-hidden="true"></i>Path / Record</span><span>已保存</span></header>
+          <h1>今天的训练<br /><span>已经留下记录。</span></h1>
+          <p>先保留发生了什么，复盘时再解释它意味着什么。</p>
+          <section class="receipt" aria-label="本次训练记录"><div class="receipt-row"><span>训练时长</span><b>59 分钟</b></div><div class="receipt-row"><span>完成动作</span><b>5 个</b></div><div class="receipt-row"><span>记录训练组</span><b>17 组</b></div><div class="receipt-row"><span>主动调整</span><b>1 处</b></div></section>
+          <p class="observation">观察：腿举在上次的相近重量区间完成。一次训练不足以判断下肢能力是否提升。</p>
+          <div class="action-area"><button class="primary" type="button" onclick="location.href='park-poster-field-report-v0-2.html'">查看阶段野外记录</button><div class="alternatives"><button class="alternative" data-go="today" type="button">返回今天</button><button class="alternative" type="button">查看训练日志</button></div></div>
+        </section>
+
+        <aside class="sheet" id="risk-sheet" aria-live="polite"><h2>先暂停高强度训练。</h2><p>疼痛、持续不适或异常疲劳不应被当作完成训练的代价。你可以改为恢复活动、记录感受，或在需要时咨询专业人士。</p><button data-close-sheet type="button">我知道了</button></aside>
+        <aside class="sheet" id="pain-sheet" aria-live="polite"><h2>已标记不适。</h2><p>本次记录会在复盘中保留。后续建议将避免依据这组表现提高负荷；若不适持续或加重，请暂停训练并寻求适合的专业支持。</p><button data-close-sheet type="button">继续记录</button></aside>
+      </section>
+    </main>
+    <script>
+      const screens = [...document.querySelectorAll(".screen")];
+      function go(id) { screens.forEach((screen) => screen.classList.toggle("is-active", screen.dataset.screen === id)); }
+      document.querySelectorAll("[data-go]").forEach((button) => button.addEventListener("click", () => go(button.dataset.go)));
+      const values = { weight: 80, reps: 8 };
+      document.querySelectorAll("[data-change]").forEach((button) => button.addEventListener("click", () => { const kind = button.dataset.change; values[kind] = Math.max(kind === "weight" ? 0 : 1, values[kind] + Number(button.dataset.step)); document.querySelector(`#${kind}`).textContent = kind === "weight" ? `${values[kind]} kg` : `${values[kind]} 次`; }));
+      document.querySelectorAll(".rpe-controls button").forEach((button) => button.addEventListener("click", () => document.querySelectorAll(".rpe-controls button").forEach((candidate) => candidate.setAttribute("aria-pressed", String(candidate === button)))));
+      document.querySelector("#complete-set").addEventListener("click", () => go("finish"));
+      document.querySelectorAll("[data-sheet]").forEach((button) => button.addEventListener("click", () => document.querySelector(`#${button.dataset.sheet}`).classList.add("is-open")));
+      document.querySelectorAll("[data-close-sheet]").forEach((button) => button.addEventListener("click", () => button.closest(".sheet").classList.remove("is-open")));
+
+      const routeCanvas = document.querySelector("#route-scene"); const routeContext = routeCanvas.getContext("2d");
+      function drawRoute() { const box = routeCanvas.getBoundingClientRect(); const ratio = Math.min(window.devicePixelRatio || 1, 2); routeCanvas.width = box.width * ratio; routeCanvas.height = box.height * ratio; routeContext.setTransform(ratio,0,0,ratio,0,0); const w = box.width; const h = box.height; routeContext.fillStyle = "#087b7d"; routeContext.fillRect(0,0,w,h); routeContext.fillStyle = "#236143"; routeContext.beginPath(); routeContext.moveTo(0,h*.88); routeContext.lineTo(w*.2,h*.44); routeContext.lineTo(w*.34,h*.66); routeContext.lineTo(w*.52,h*.27); routeContext.lineTo(w*.7,h*.68); routeContext.lineTo(w*.85,h*.36); routeContext.lineTo(w,h*.66); routeContext.lineTo(w,h); routeContext.lineTo(0,h); routeContext.fill(); routeContext.fillStyle = "#1c4232"; for(let i=0;i<25;i++){const x=(i/24)*w; const bh=h*(.72+((i*7)%5)/42); const th=h*(.13+((i*11)%8)/100); routeContext.beginPath(); routeContext.moveTo(x,bh-th); routeContext.lineTo(x-th*.35,bh); routeContext.lineTo(x+th*.35,bh); routeContext.fill(); } routeContext.strokeStyle="#eca93d"; routeContext.lineWidth=2; routeContext.beginPath(); routeContext.moveTo(w*.12,h*.85); routeContext.bezierCurveTo(w*.28,h*.72,w*.34,h*.78,w*.43,h*.62); routeContext.bezierCurveTo(w*.51,h*.47,w*.56,h*.55,w*.67,h*.36); routeContext.stroke(); [0.12,0.36,0.52,0.67].forEach((point,index)=>{routeContext.fillStyle=index===3?"#eca93d":"#f1e2b8"; routeContext.beginPath(); routeContext.arc(w*point,h*(index===3?.36:.72-index*.04),index===3?6:4,0,Math.PI*2); routeContext.fill();}); }
+      new ResizeObserver(drawRoute).observe(routeCanvas); drawRoute();
+    </script>
+  </body>
+</html>

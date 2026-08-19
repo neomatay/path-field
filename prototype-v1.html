@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PATH / FIELD - 可体验原型 v1</title>
+    <style>
+      :root {
+        --paper: #f1e2b8;
+        --paper-low: #e3cfa0;
+        --ink: #1c2a23;
+        --forest: #205a3e;
+        --lake: #087b7d;
+        --sun: #eca93d;
+        --clay: #be6038;
+        --deep: #142b27;
+        --deep-2: #223e35;
+        --line: rgba(28, 42, 35, .28);
+        --light-line: rgba(241, 226, 184, .29);
+      }
+      * { box-sizing: border-box; }
+      html { background: var(--deep); }
+      body { background: var(--deep); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif; letter-spacing: 0; margin: 0; }
+      button { font: inherit; }
+      button, a { -webkit-tap-highlight-color: transparent; }
+      h1, h2, h3, p { margin: 0; }
+      .prototype-stage { align-items: center; display: flex; justify-content: center; min-height: 100vh; padding: 24px; }
+      .app { background: var(--paper); box-shadow: 0 28px 66px rgba(0,0,0,.3); min-height: 900px; overflow: hidden; position: relative; width: min(100%, 438px); }
+      .app::before { border: 1px solid rgba(28,42,35,.36); content:""; inset: 9px; pointer-events: none; position:absolute; z-index: 20; }
+      .view { display:none; min-height:900px; padding: 25px 27px 103px; position:relative; }
+      .view.is-active { display:flex; flex-direction:column; }
+      .deep-view { background: var(--deep); color: #edf0dc; }
+      .deep-view::after { border-color: rgba(241,226,184,.23); }
+
+      .topline { align-items:center; display:flex; font-family:"Avenir Next Condensed", "DIN Condensed", -apple-system, sans-serif; font-size: 12px; font-weight:760; justify-content:space-between; letter-spacing:.06em; text-transform:uppercase; }
+      .brand { align-items:center; display:flex; gap:8px; }
+      .tree { background:var(--forest); clip-path: polygon(50% 0,100% 57%,72% 57%,100% 100%,0 100%,28% 57%,0 57%); display:block; height:22px; width:20px; }
+      .deep-view .tree { background:var(--sun); }
+      .back-button { align-items:center; background:transparent; border:0; color:inherit; cursor:pointer; display:inline-flex; font-size:14px; gap:7px; padding:6px 0; }
+      .back-button::before { border-bottom:1.5px solid currentColor; border-left:1.5px solid currentColor; content:""; height:7px; transform:rotate(45deg); width:7px; }
+
+      .choose { background:var(--paper); padding-top:34px; }
+      .choose h1 { font-size:40px; font-weight:820; line-height:1.06; margin-top:37px; }
+      .choose h1 span { color:var(--forest); }
+      .choose > p { color:#4e5f54; font-size:14px; line-height:1.65; margin-top:10px; }
+      .state-list { border-top:1px solid var(--line); margin-top:31px; }
+      .state-choice { background:transparent; border:0; border-bottom:1px solid var(--line); color:var(--ink); cursor:pointer; display:grid; gap:13px; grid-template-columns:34px 1fr auto; padding:17px 0; text-align:left; width:100%; }
+      .state-choice:hover, .state-choice:focus-visible { background:rgba(236,169,61,.16); outline:none; }
+      .state-index { color:var(--forest); font-family:"Arial Narrow", "Avenir Next Condensed", -apple-system, sans-serif; font-size:16px; font-weight:800; }
+      .state-choice b { display:block; font-size:17px; font-weight:800; }
+      .state-choice span { color:#536359; display:block; font-size:12px; line-height:1.45; margin-top:3px; }
+      .choice-arrow { align-self:center; border-right:1.5px solid var(--forest); border-top:1.5px solid var(--forest); height:9px; transform:rotate(45deg); width:9px; }
+      .choose-note { border-top:2px solid var(--sun); color:#4b5b51; font-size:13px; line-height:1.55; margin-top:auto; padding:12px 0 0; }
+
+      .calibrate h1 { color:var(--paper); font-size:34px; font-weight:810; line-height:1.1; margin-top:31px; }
+      .calibrate > p { color:#bdc8b2; font-size:14px; line-height:1.6; margin-top:9px; }
+      .state-readout { border-bottom:1px solid var(--light-line); border-top:1px solid var(--light-line); margin-top:25px; padding:15px 0; }
+      .state-readout b { color:var(--sun); display:block; font-size:12px; }
+      .state-readout span { color:#edf0dc; display:block; font-size:15px; font-weight:700; line-height:1.45; margin-top:4px; }
+      .calibrate h2 { color:var(--paper); font-size:18px; font-weight:780; margin-top:26px; }
+      .chip-row { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+      .chip { background:var(--deep-2); border:1px solid rgba(241,226,184,.35); color:#e8edd9; cursor:pointer; font-size:13px; padding:10px 11px; }
+      .chip[aria-pressed="true"] { background:var(--sun); border-color:var(--sun); color:var(--ink); font-weight:780; }
+      .safety-question { border-bottom:1px solid var(--light-line); border-top:1px solid var(--light-line); margin-top:24px; padding:18px 0; }
+      .safety-question b { color:var(--paper); display:block; font-size:16px; line-height:1.4; }
+      .safety-question span { color:#bdc8b2; display:block; font-size:12px; line-height:1.5; margin-top:6px; }
+      .dual-action { display:grid; gap:1px; grid-template-columns:1fr 1fr; margin-top:14px; }
+      .dual-action button { background:#29473c; border:0; color:#e5ead8; cursor:pointer; font-size:13px; padding:13px 10px; }
+      .dual-action button.selected, .dual-action button:hover, .dual-action button:focus-visible { background:var(--sun); color:var(--ink); outline:none; }
+      .primary { background:var(--forest); border:0; color:var(--paper); cursor:pointer; font-size:15px; font-weight:790; padding:16px; text-align:left; width:100%; }
+      .primary:hover, .primary:focus-visible { background:var(--ink); outline:3px solid rgba(236,169,61,.62); outline-offset:2px; }
+      .deep-view .primary { background:var(--sun); color:var(--ink); }
+      .deep-view .primary:hover, .deep-view .primary:focus-visible { background:#f5c267; }
+      .sticky-action { margin-top:auto; padding-top:20px; }
+
+      .today h1 { font-size:35px; font-weight:820; line-height:1.08; margin-top:29px; }
+      .today h1 span { color:var(--forest); }
+      .today-intro { color:#4c5f53; font-size:14px; line-height:1.58; margin-top:8px; }
+      .route-field { background:var(--lake); height:158px; margin:21px -27px 0; overflow:hidden; position:relative; }
+      #route-canvas { height:100%; width:100%; }
+      .route-label { background:var(--paper); bottom:15px; font-size:12px; font-weight:770; left:27px; padding:9px 10px; position:absolute; }
+      .route-label span { color:#56655b; font-weight:600; }
+      .mission { border-bottom:1px solid var(--line); padding:21px 0 17px; }
+      .kicker { color:var(--forest); font-size:12px; font-weight:790; }
+      .mission h2 { font-size:22px; font-weight:800; line-height:1.2; margin-top:6px; }
+      .mission p { color:#4e5e54; font-size:13px; line-height:1.55; margin-top:5px; }
+      .reason { border-bottom:1px solid var(--line); display:grid; gap:11px; grid-template-columns:16px 1fr; padding:13px 0; }
+      .reason-mark { border:1.5px solid var(--forest); border-radius:50%; height:14px; margin-top:3px; position:relative; width:14px; }
+      .reason.observation .reason-mark::after { background:var(--sun); border-radius:50%; content:""; height:5px; position:absolute; right:-3px; top:-3px; width:5px; }
+      .reason.decision .reason-mark { border-radius:0; transform:rotate(45deg); }
+      .reason b { color:var(--forest); display:block; font-size:12px; }
+      .reason span { display:block; font-size:13px; line-height:1.45; margin-top:3px; }
+      .choice-actions { display:grid; gap:1px; grid-template-columns:1fr 1fr; margin-top:1px; }
+      .choice-actions button { background:var(--paper-low); border:0; color:var(--ink); cursor:pointer; font-size:13px; padding:14px 11px; text-align:left; }
+      .choice-actions button:hover, .choice-actions button:focus-visible { background:var(--sun); outline:none; }
+      .support-link { background:transparent; border:0; color:#7f3a2c; cursor:pointer; font-size:13px; margin-top:15px; padding:0; text-decoration:underline; text-underline-offset:3px; }
+
+      .training-main { padding-top:30px; }
+      .training-main h1 { color:var(--paper); font-size:42px; font-weight:820; line-height:1; }
+      .training-main > p { color:#bdc8b2; font-size:13px; line-height:1.52; margin-top:8px; }
+      .goal { border-bottom:1px solid var(--light-line); border-top:1px solid var(--light-line); display:grid; gap:8px; grid-template-columns:1fr 1fr; margin-top:25px; padding:16px 0; }
+      .goal b { color:var(--sun); display:block; font-size:11px; }
+      .goal span { color:var(--paper); display:block; font-size:16px; font-weight:760; margin-top:3px; }
+      .sets { display:flex; gap:7px; margin:22px 0 10px; }
+      .sets button { background:transparent; border:1px solid rgba(241,226,184,.42); color:#e8edd8; cursor:pointer; font-size:12px; height:29px; width:29px; }
+      .sets button.is-done { background:var(--forest); border-color:var(--forest); }
+      .sets button.is-current { background:var(--sun); border-color:var(--sun); color:var(--ink); font-weight:800; }
+      .set-copy { color:#bdc8b2; font-size:13px; }
+      .adjustment-note { border-left:2px solid var(--sun); color:#e8edd9; font-size:13px; line-height:1.45; margin:14px 0 -2px; padding-left:10px; }
+      .measurements { border-top:1px solid var(--light-line); margin-top:17px; }
+      .measure { align-items:center; border-bottom:1px solid rgba(241,226,184,.21); display:grid; gap:10px; grid-template-columns:1fr auto auto auto; min-height:78px; }
+      .measure span { color:#cbd3c0; font-size:13px; }
+      .measure output { color:var(--paper); font-size:27px; font-variant-numeric:tabular-nums; font-weight:790; min-width:84px; text-align:right; }
+      .measure button { background:transparent; border:1px solid rgba(241,226,184,.42); color:var(--paper); cursor:pointer; font-size:19px; height:35px; width:35px; }
+      .measure button:hover, .measure button:focus-visible { background:var(--forest); border-color:var(--forest); outline:none; }
+      .effort { border-bottom:1px solid rgba(241,226,184,.21); padding:17px 0 18px; }
+      .effort > span { color:#cbd3c0; display:block; font-size:13px; margin-bottom:9px; }
+      .effort-controls { display:grid; gap:1px; grid-template-columns:repeat(3,1fr); }
+      .effort-controls button { background:#253f36; border:0; color:#e1e7d5; cursor:pointer; font-size:13px; padding:11px 7px; }
+      .effort-controls button[aria-pressed="true"] { background:var(--sun); color:var(--ink); font-weight:790; }
+      .training-tools { display:grid; gap:1px; grid-template-columns:1fr 1fr; margin-top:1px; }
+      .training-tools button { background:#29473c; border:0; color:#e4ead8; cursor:pointer; font-size:13px; padding:14px 10px; text-align:left; }
+      .training-tools button:hover, .training-tools button:focus-visible { background:#3a594b; outline:none; }
+
+      .journey h1, .review h1, .commit h1, .support h1 { font-size:34px; font-weight:820; line-height:1.1; margin-top:32px; }
+      .journey h1 span, .review h1 span, .commit h1 span { color:var(--forest); }
+      .journey > p, .review > p, .commit > p, .support > p { color:#4f6055; font-size:14px; line-height:1.6; margin-top:9px; }
+      .mission-stamp { background:var(--forest); color:var(--paper); margin:27px -27px 0; padding:23px 27px; }
+      .mission-stamp b { color:var(--sun); display:block; font-size:12px; }
+      .mission-stamp h2 { font-size:23px; font-weight:800; line-height:1.2; margin-top:6px; }
+      .mission-stamp p { color:#dce4d1; font-size:13px; line-height:1.52; margin-top:5px; }
+      .route-list { border-top:1px solid var(--line); margin-top:24px; }
+      .route-item { border-bottom:1px solid var(--line); padding:15px 0; }
+      .route-item b { color:var(--forest); display:block; font-size:12px; }
+      .route-item span { display:block; font-size:14px; line-height:1.45; margin-top:4px; }
+      .review-receipt { border-bottom:1px solid var(--line); border-top:1px solid var(--line); margin-top:25px; padding:6px 0; }
+      .review-row { align-items:flex-start; border-bottom:1px solid var(--line); display:grid; gap:11px; grid-template-columns:14px 1fr; padding:15px 0; }
+      .review-row:last-child { border-bottom:0; }
+      .review-row .review-dot { border:1.5px solid var(--forest); border-radius:50%; height:13px; margin-top:3px; position:relative; width:13px; }
+      .review-row.observation .review-dot::after { background:var(--sun); border-radius:50%; content:""; height:5px; position:absolute; right:-3px; top:-3px; width:5px; }
+      .review-row.unknown .review-dot { border-radius:0; transform:rotate(45deg); }
+      .review-row b { color:var(--forest); display:block; font-size:12px; }
+      .review-row span { display:block; font-size:14px; line-height:1.48; margin-top:3px; }
+      .decision-list { border-top:1px solid var(--line); margin-top:25px; }
+      .decision-option { background:transparent; border:0; border-bottom:1px solid var(--line); color:var(--ink); cursor:pointer; display:grid; gap:10px; grid-template-columns:16px 1fr; padding:15px 0; text-align:left; width:100%; }
+      .decision-option i { border:1.5px solid var(--forest); border-radius:50%; height:14px; margin-top:4px; position:relative; width:14px; }
+      .decision-option[aria-pressed="true"] i::after { background:var(--sun); border-radius:50%; content:""; height:8px; left:2px; position:absolute; top:2px; width:8px; }
+      .decision-option b { display:block; font-size:16px; font-weight:790; }
+      .decision-option span { color:#526259; display:block; font-size:13px; line-height:1.45; margin-top:3px; }
+      .decision-evidence { border-bottom:1px solid var(--line); border-top:1px solid var(--line); margin-top:25px; padding:14px 0 1px; }
+      .decision-evidence h2 { font-size:16px; font-weight:790; line-height:1.35; }
+      .decision-evidence h3 { color:var(--forest); font-size:12px; font-weight:790; margin:16px 0 4px; }
+      .decision-evidence p { color:#526259; font-size:13px; line-height:1.5; margin:0 0 12px; }
+      .commit .seal { background:var(--lake); color:var(--paper); margin:33px -27px 0; min-height:190px; padding:28px 27px; position:relative; }
+      .commit .seal::after { border:1px solid rgba(241,226,184,.45); content:""; inset:13px; pointer-events:none; position:absolute; }
+      .seal b { color:var(--sun); display:block; font-size:12px; position:relative; z-index:1; }
+      .seal h2 { font-size:27px; font-weight:820; line-height:1.08; margin-top:7px; position:relative; z-index:1; }
+      .seal p { color:#e2ead7; font-size:13px; line-height:1.5; margin-top:8px; position:relative; z-index:1; }
+      .support { justify-content:center; }
+      .support h1 { color:var(--paper); }
+      .support > p { color:#c2ccb7; }
+      .support .support-rules { border-bottom:1px solid var(--light-line); border-top:1px solid var(--light-line); margin-top:28px; }
+      .support .support-rules div { border-bottom:1px solid rgba(241,226,184,.2); color:#e7edda; font-size:14px; line-height:1.5; padding:15px 0; }
+      .support .support-rules div:last-child { border-bottom:0; }
+
+      .bottom-nav { align-items:stretch; background:rgba(241,226,184,.97); border-top:1px solid var(--line); bottom:0; display:grid; grid-template-columns:repeat(4,1fr); left:0; padding:7px 17px 14px; position:absolute; right:0; z-index:18; }
+      .bottom-nav button { background:transparent; border:0; color:#5b695f; cursor:pointer; font-size:11px; padding:11px 4px 7px; }
+      .bottom-nav button.is-active { color:var(--forest); font-weight:800; }
+      .bottom-nav button:focus-visible { outline:2px solid var(--sun); outline-offset:-2px; }
+      .deep-view ~ .bottom-nav { background:var(--deep); border-color:var(--light-line); }
+      .deep-view ~ .bottom-nav button { color:#bdc8b2; }
+      .deep-view ~ .bottom-nav button.is-active { color:var(--sun); }
+      .sheet { background:var(--paper); border-top:3px solid var(--clay); bottom:0; box-shadow:0 -15px 36px rgba(0,0,0,.22); display:none; left:0; padding:26px 27px 34px; position:absolute; right:0; z-index:25; }
+      .sheet.is-open { display:block; }
+      .sheet h2 { font-size:21px; font-weight:810; }
+      .sheet p { color:#4f5f55; font-size:14px; line-height:1.6; margin-top:8px; }
+      .sheet button { background:var(--forest); border:0; color:var(--paper); cursor:pointer; font-size:14px; font-weight:780; margin-top:18px; padding:12px 14px; }
+      .sheet .sheet-option { display:block; margin-top:1px; text-align:left; width:100%; }
+      .sheet .sheet-option:first-of-type { margin-top:18px; }
+      .sheet .sheet-secondary { background:var(--paper-low); color:var(--ink); }
+      @media(max-width:520px) { .prototype-stage{display:block;padding:0}.app{min-height:100vh;width:100%}.view{min-height:100vh}.choose h1{font-size:37px}.route-field{height:150px} }
+    </style>
+  </head>
+  <body>
+    <!--
+      THESIS: The prototype proves an adaptive training decision loop from entry to user-confirmed next stage; it refuses a course catalog, streak system, or opaque AI coach.
+      OWN-WORLD: The selected national-park field language becomes operating UI: paper, fir and deep-green states, small terrain routing, precise evidence lines, and a stage print only after review.
+      STORY: A user selects their real state, passes a safety check, receives a reasoned training option, records it, separates evidence from uncertainty, and chooses the next route.
+      FIRST VIEWPORT: A state-choice field opens immediately, so the product begins with the user's present condition rather than a generic dashboard.
+      FORM: Interactive mobile-first end-to-end prototype for three state paths; seed 6179fda8.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+    -->
+    <main class="prototype-stage">
+      <section class="app" aria-label="PATH FIELD 健身成长系统可体验原型">
+        <section class="view choose is-active" data-view="choose"></section>
+        <section class="view deep-view calibrate" data-view="calibrate"></section>
+        <section class="view today" data-view="today"></section>
+        <section class="view deep-view training" data-view="training"></section>
+        <section class="view journey" data-view="journey"></section>
+        <section class="view review" data-view="review"></section>
+        <section class="view commit" data-view="commit"></section>
+        <section class="view deep-view support" data-view="support"></section>
+        <nav class="bottom-nav" aria-label="原型导航">
+          <button type="button" data-nav="today">今天</button><button type="button" data-nav="training">训练</button><button type="button" data-nav="journey">旅程</button><button type="button" data-nav="review">复盘</button>
+        </nav>
+        <aside class="sheet" id="risk-sheet" aria-live="polite"></aside>
+      </section>
+    </main>
+    <script src="./prototype-data-v1.js"></script>
+    <script>
+      const fallback = {
+        personas: {
+          restart: { label:"重返", intro:"停练一段时间，先找回可完成的节奏。", state:"近期训练中断 8 周 · 可用器械：基础健身房", mission:{title:"用两周重新建立可完成的训练节奏", proof:"完成 3 次低负荷训练并记录体感", notJudge:"不以回到旧重量或体重变化裁判"}, today:{full:"20 分钟重返训练", short:"12 分钟活动版", recovery:"恢复活动", reason:"距离上次正式训练较久，先用低风险动作重新确认身体与节奏。", minutes:20}, session:{exercise:"坐姿划船", target:"25 kg · 8-10 次", last:"本阶段尚无可比表现", weight:25, reps:8}, review:{facts:["完成 20 分钟重返训练", "记录 3 个动作与主观难度"], observations:["训练后没有记录不适，愿意安排下一次训练"], unknowns:["一次训练不足以判断是否适合恢复旧计划"]}, decisions:[{title:"继续两周重返节奏",description:"保持每周 2 次，先积累 3 次完成记录。"},{title:"改为更短的开始",description:"下次只做 12 分钟活动版，降低进入门槛。"},{title:"暂缓并保留位置",description:"不删除历史，等时间和状态更合适时再回来。"}] },
+          routine: { label:"建立规律", intro:"有意愿开始，但时间与生活节奏仍不稳定。", state:"每周可训练 2 次 · 今天只有 25 分钟", mission:{title:"把每周两次训练放进真实生活", proof:"连续两周完成 4 次基础训练", notJudge:"不以连续打卡或体重变化裁判"}, today:{full:"25 分钟短版全身训练", short:"12 分钟最低行动", recovery:"恢复活动", reason:"今天可用时间较短，短版保留主动作并减少辅助动作。", minutes:25}, session:{exercise:"高位下拉", target:"30 kg · 8-10 次", last:"上次：30 kg × 8", weight:30, reps:8}, review:{facts:["完成本周第 2 次训练", "在 25 分钟内完成 3 个主动作"], observations:["短版更符合本周时间限制，执行阻力较低"], unknowns:["还需要下一周记录来判断两次节奏是否稳定"]}, decisions:[{title:"保持每周两次短版",description:"继续验证这个节奏是否能长期存在。"},{title:"下周尝试一次完整版本",description:"在周末或时间充足日补一次完整训练。"},{title:"调整可训练日",description:"把一个训练日移到更可预测的时间段。"}] },
+          advance: { label:"继续进阶", intro:"已有训练习惯，但卡在“是否有效、下一步怎么调”。", state:"本阶段已完成 3 / 8 次可比较下肢训练 · 今天可用 55 分钟", mission:{title:"建立稳定的下肢可比较表现", proof:"完成 8 次可比较训练，观察表现与体感", notJudge:"体重不作为阶段的唯一裁判"}, today:{full:"完整下肢训练", short:"25 分钟短版", recovery:"恢复版", reason:"上次完成度稳定，距离上次下肢训练 3 天，今天可继续积累可比较表现。", minutes:55}, session:{exercise:"腿举", target:"80 kg · 8-10 次", last:"上次：80 kg × 10", weight:80, reps:8}, review:{facts:["完成 59 分钟下肢训练", "记录 5 个动作、17 组训练组、1 处主动调整"], observations:["腿举在相近重量区间完成；下肢训练证据正在积累"], unknowns:["一次训练和当前体重趋势不足以判断身体组成变化"]}, decisions:[{title:"继续积累同区间表现",description:"完成本阶段剩余训练，优先得到更稳定的比较证据。"},{title:"下次尝试小幅加重",description:"只在动作、体感和完成度仍稳定时尝试。"},{title:"安排恢复周",description:"保留训练节奏，主动降低负荷并观察疲劳。"}] }
+        },
+        safety: { question:"今天是否出现胸痛、晕厥、异常呼吸困难，或急性/持续恶化的疼痛？", detail:"出现以上情况时，系统不生成高强度训练建议，也不判断原因。" },
+        ruleLabels: { fact:"事实", observation:"观察", unknown:"仍待确认", decision:"你可以决定" }
+      };
+      const Data = window.FitnessPrototypeData || fallback;
+      function asText(value, fallbackText = "") {
+        if (typeof value === "string") return value;
+        if (value && typeof value.statement === "string") return value.statement;
+        if (value && typeof value.label === "string") return value.label;
+        if (value && typeof value.title === "string") return value.title;
+        return fallbackText;
+      }
+      function normalizeVariant(variant, fallbackLabel, fallbackMinutes) {
+        if (typeof variant === "string") return { label: variant, minutes: fallbackMinutes };
+        return { label: asText(variant, fallbackLabel), minutes: variant && variant.estimatedMinutes || fallbackMinutes };
+      }
+      function normalizePersona(raw) {
+        if (typeof raw.state === "string") return raw;
+        const fullVariant = normalizeVariant(raw.today && raw.today.full, "完整训练", 45);
+        const shortVariant = normalizeVariant(raw.today && raw.today.short, "短版训练", 20);
+        const recoveryVariant = normalizeVariant(raw.today && raw.today.recovery, "恢复版", 12);
+        const lastSet = raw.session && raw.session.actualBlocks && raw.session.actualBlocks[0] && raw.session.actualBlocks[0].sets && raw.session.actualBlocks[0].sets.slice(-1)[0] || {};
+        function sessionForVariant(variant) {
+          const block = variant && variant.blocks && variant.blocks[0] || {};
+          const loadMatch = String(block.target || "").match(/(\d+)\s*kg/i);
+          return {
+            exercise: block.name || "当前训练动作",
+            target: block.target || "按舒适范围完成",
+            last: block.previousComparable || "本阶段尚无可比表现",
+            weight: lastSet.load || Number(loadMatch && loadMatch[1]) || 20,
+            reps: lastSet.reps || 8
+          };
+        }
+        const state = raw.state || {};
+        const minutes = state.availability && state.availability.minutesToday || fullVariant.minutes;
+        const stateText = [
+          `${minutes} 分钟可用`,
+          state.availability && state.availability.environment,
+          state.readiness && state.readiness.selected
+        ].filter(Boolean).join(" · ");
+        const review = raw.review || {};
+        const decisions = raw.decisions && raw.decisions.options || [];
+        const reviewEvidence = [
+          ...(review.facts || []),
+          ...(review.observations || []),
+          ...(review.unknowns || [])
+        ].reduce((index, entry) => {
+          if (entry && entry.id) index[entry.id] = asText(entry);
+          return index;
+        }, {});
+        return {
+          label: raw.label,
+          intro: raw.intro,
+          state: stateText,
+          mission: {
+            title: raw.mission && raw.mission.title || "当前阶段训练方向",
+            proof: raw.mission && raw.mission.successEvidence && raw.mission.successEvidence[0] || "积累下一次判断需要的训练证据",
+            notJudge: raw.mission && raw.mission.notTheJudge && raw.mission.notTheJudge.join("、") || "单一数据"
+          },
+          today: {
+            full: fullVariant.label,
+            short: shortVariant.label,
+            recovery: recoveryVariant.label,
+            fullMinutes: fullVariant.minutes,
+            shortMinutes: shortVariant.minutes,
+            recoveryMinutes: recoveryVariant.minutes,
+            reason: raw.today && raw.today.rationale && raw.today.rationale.statement || "根据当前状态提供可选择的下一步。",
+            minutes
+          },
+          session: sessionForVariant(raw.today && raw.today.full),
+          sessionsByPlan: {
+            full: sessionForVariant(raw.today && raw.today.full),
+            short: sessionForVariant(raw.today && raw.today.short),
+            recovery: sessionForVariant(raw.today && raw.today.recovery)
+          },
+          review: {
+            facts: (review.facts || []).map((entry) => asText(entry)).filter(Boolean),
+            observations: (review.observations || []).map((entry) => asText(entry)).filter(Boolean),
+            unknowns: (review.unknowns || []).map((entry) => asText(entry)).filter(Boolean)
+          },
+          decisions: decisions.map((entry) => ({
+            title: entry.label,
+            description: entry.impact,
+            evidence: (entry.evidenceIds || []).map((id) => reviewEvidence[id]).filter(Boolean),
+            unknowns: (entry.unknowns || []).map((item) => asText(item)).filter(Boolean)
+          })).filter((entry) => entry.title)
+        };
+      }
+      const Personas = Object.fromEntries(Object.entries(Data.personas || fallback.personas).map(([key, raw]) => [key, normalizePersona(raw)]));
+      const Safety = Data.safety && Data.safety.question ? Data.safety : fallback.safety;
+      const views = [...document.querySelectorAll(".view")];
+      const nav = [...document.querySelectorAll(".bottom-nav button")];
+      const appState = { persona:null, view:"choose", minutes:null, safety:"clear", plan:"full", weight:0, reps:0, effort:"合适", decision:0, currentSet:3, adjustment:null };
+      const getPersona = () => Personas[appState.persona] || Personas.advance || fallback.personas.advance;
+      const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#039;","\"":"&quot;"}[char]));
+      function renderTopline(label, right = "") { return `<header class="topline"><span class="brand"><i class="tree" aria-hidden="true"></i>PATH / ${label}</span><span>${right}</span></header>`; }
+      function go(view) { appState.view=view; views.forEach((element) => element.classList.toggle("is-active", element.dataset.view===view)); nav.forEach((button) => button.classList.toggle("is-active", button.dataset.nav===view)); render(view); window.scrollTo({top:0, behavior:"instant"}); }
+      function renderChoose() {
+        const el=document.querySelector('[data-view="choose"]');
+        const choices=Object.entries(Personas).map(([key, person], index) => `<button class="state-choice" data-persona="${key}" type="button"><span class="state-index">0${index+1}</span><span><b>${escapeHtml(person.label)}</b><span>${escapeHtml(person.intro)}</span></span><i class="choice-arrow" aria-hidden="true"></i></button>`).join("");
+        el.innerHTML=`${renderTopline("FIELD", "选择你的现在")}<h1>从<span>现在</span>开始，<br>不是从理想状态开始。</h1><p>选择最接近你的状态。它不是等级，也不会锁住你之后能看到的内容。</p><div class="state-list">${choices}</div><p class="choose-note">本原型只收集当前判断必要的信息。你可以随时改变描述，训练历史也不会因中断被清空。</p>`;
+        el.querySelectorAll('[data-persona]').forEach((button) => button.addEventListener('click', () => { appState.persona=button.dataset.persona; const person=getPersona(); appState.minutes=person.today.minutes; appState.weight=person.session.weight; appState.reps=person.session.reps; appState.decision=0; appState.currentSet=3; appState.adjustment=null; go('calibrate'); }));
+      }
+      function renderCalibrate() {
+        const p=getPersona(); const safety=Safety; const el=document.querySelector('[data-view="calibrate"]');
+        el.innerHTML=`${renderTopline("CHECK", "10 秒校准")}<h1>先确认今天<br>适不适合出发。</h1><p>系统只根据你愿意提供的当前事实提出建议，最终仍由你选择。</p><div class="state-readout"><b>当前状态</b><span>${escapeHtml(p.state)}</span></div><h2>今天可用多久？</h2><div class="chip-row"><button class="chip" data-minutes="12" aria-pressed="${appState.minutes===12}" type="button">12 分钟</button><button class="chip" data-minutes="25" aria-pressed="${appState.minutes===25}" type="button">25 分钟</button><button class="chip" data-minutes="55" aria-pressed="${appState.minutes===55}" type="button">55 分钟</button></div><section class="safety-question"><b>${escapeHtml(safety.question)}</b><span>${escapeHtml(safety.detail)}</span><div class="dual-action"><button class="${appState.safety==='clear'?'selected':''}" data-safety="clear" type="button">没有这些情况</button><button class="${appState.safety==='risk'?'selected':''}" data-safety="risk" type="button">有或不确定</button></div></section><div class="sticky-action"><button class="primary" id="calibration-next" type="button">查看今天的可选训练</button></div>`;
+        el.querySelectorAll('[data-minutes]').forEach((button)=>button.addEventListener('click',()=>{appState.minutes=Number(button.dataset.minutes); renderCalibrate();}));
+        el.querySelectorAll('[data-safety]').forEach((button)=>button.addEventListener('click',()=>{appState.safety=button.dataset.safety; renderCalibrate();}));
+        el.querySelector('#calibration-next').addEventListener('click',()=>go(appState.safety==='risk'?'support':'today'));
+      }
+      function drawRoute() { const canvas=document.querySelector('#route-canvas'); if(!canvas) return; const ctx=canvas.getContext('2d'); const box=canvas.getBoundingClientRect(); const ratio=Math.min(window.devicePixelRatio||1,2); canvas.width=Math.floor(box.width*ratio);canvas.height=Math.floor(box.height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);const w=box.width,h=box.height;ctx.fillStyle='#087b7d';ctx.fillRect(0,0,w,h);ctx.fillStyle='#2b6748';ctx.beginPath();ctx.moveTo(0,h*.85);ctx.lineTo(w*.18,h*.48);ctx.lineTo(w*.34,h*.66);ctx.lineTo(w*.53,h*.26);ctx.lineTo(w*.7,h*.68);ctx.lineTo(w*.86,h*.39);ctx.lineTo(w,h*.68);ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.fill();ctx.fillStyle='#1d4935';for(let i=0;i<26;i++){const x=i*w/25,b=h*(.76+(i%4)*.025),t=h*(.12+(i%7)*.012);ctx.beginPath();ctx.moveTo(x,b-t);ctx.lineTo(x-t*.33,b);ctx.lineTo(x+t*.33,b);ctx.fill();}ctx.strokeStyle='#eca93d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(w*.14,h*.86);ctx.bezierCurveTo(w*.27,h*.72,w*.36,h*.78,w*.44,h*.59);ctx.bezierCurveTo(w*.51,h*.48,w*.58,h*.54,w*.69,h*.33);ctx.stroke();[.14,.38,.53,.69].forEach((x,i)=>{ctx.fillStyle=i===3?'#eca93d':'#f1e2b8';ctx.beginPath();ctx.arc(w*x,h*(.76-i*.08),i===3?6:4,0,Math.PI*2);ctx.fill();}); }
+      function renderToday() {
+        const p=getPersona();
+        const recommendedPlan = appState.minutes >= p.today.fullMinutes ? 'full' : appState.minutes >= p.today.shortMinutes ? 'short' : 'recovery';
+        const planNames = { full:p.today.full, short:p.today.short, recovery:p.today.recovery };
+        const planMinutes = { full:p.today.fullMinutes, short:p.today.shortMinutes, recovery:p.today.recoveryMinutes };
+        const recommendedName = planNames[recommendedPlan];
+        const alternatePlan = recommendedPlan === 'full' ? 'short' : recommendedPlan === 'short' ? 'full' : 'short';
+        const secondAlternative = recommendedPlan === 'recovery' ? 'full' : 'recovery';
+        const secondAlternativeLabel = recommendedPlan === 'recovery' ? `仍想尝试：${planNames[secondAlternative]}` : '选择恢复版';
+        const el=document.querySelector('[data-view="today"]');
+        el.innerHTML=`${renderTopline("TODAY", "当前阶段")}<h1>今天，<span>${escapeHtml(p.label)}</span><br>这段路。</h1><p class="today-intro">${escapeHtml(p.intro)}</p><div class="route-field" role="img" aria-label="显示当前阶段训练位置的路线地形图"><canvas id="route-canvas"></canvas><span class="route-label">${escapeHtml(p.mission.title)} <span>· ${escapeHtml(p.mission.proof)}</span></span></div><section class="mission"><div class="kicker">今天的建议</div><h2>${escapeHtml(recommendedName)} · 约 ${planMinutes[recommendedPlan]} 分钟</h2><p>${escapeHtml(p.today.reason)}</p></section><section><div class="reason"><i class="reason-mark" aria-hidden="true"></i><div><b>事实</b><span>${escapeHtml(p.state)}</span></div></div><div class="reason observation"><i class="reason-mark" aria-hidden="true"></i><div><b>系统建议</b><span>${escapeHtml(p.today.reason)}</span></div></div><div class="reason decision"><i class="reason-mark" aria-hidden="true"></i><div><b>你可以决定</b><span>完整、短版或恢复版都可以；系统会保留选择原因以改善下次匹配。</span></div></div></section><div class="sticky-action"><button class="primary" data-plan="${recommendedPlan}" type="button">开始：${escapeHtml(recommendedName)}</button><div class="choice-actions"><button data-plan="${alternatePlan}" type="button">改为：${escapeHtml(planNames[alternatePlan])}</button><button data-plan="${secondAlternative}" type="button">${escapeHtml(secondAlternativeLabel)}</button></div><button class="support-link" data-open-risk type="button">有疼痛、不适或异常疲劳？</button></div>`;
+        el.querySelectorAll('[data-plan]').forEach((button)=>button.addEventListener('click',()=>{appState.plan=button.dataset.plan; const selectedSession=p.sessionsByPlan && p.sessionsByPlan[appState.plan] || p.session; appState.weight=selectedSession.weight; appState.reps=selectedSession.reps; appState.currentSet=3; appState.adjustment=null; go('training');}));
+        el.querySelector('[data-open-risk]').addEventListener('click',openRiskSheet); requestAnimationFrame(drawRoute);
+      }
+      function renderTraining() {
+        const p=getPersona(); const planName=appState.plan==='full'?p.today.full:appState.plan==='short'?p.today.short:p.today.recovery; const session=p.sessionsByPlan && p.sessionsByPlan[appState.plan] || p.session; const el=document.querySelector('[data-view="training"]');
+        const setButtons = [1,2,3,4].map((set) => `<button class="${set < appState.currentSet ? 'is-done' : set === appState.currentSet ? 'is-current' : ''}" data-set="${set}" aria-pressed="${set === appState.currentSet}" type="button">${set}</button>`).join('');
+        const adjustmentNote = appState.adjustment ? `<p class="adjustment-note">已记录调整：${escapeHtml(appState.adjustment)}。这次记录会保留原定动作与调整原因。</p>` : '';
+        el.innerHTML=`${renderTopline("TRAINING", "31:48")}<button class="back-button" data-go="today" type="button">返回今天</button><main class="training-main"><h1>${escapeHtml(session.exercise)}</h1><p>${escapeHtml(planName)} · 当前动作 2 / 5 · 替换动作不会抹去今天已经完成的记录。</p><section class="goal"><div><b>本组目标</b><span>${escapeHtml(session.target)}</span></div><div><b>上次可比表现</b><span>${escapeHtml(session.last)}</span></div></section><div class="sets" aria-label="当前组数">${setButtons}</div><p class="set-copy">记录第 ${appState.currentSet} 组的实际表现</p>${adjustmentNote}<section class="measurements"><div class="measure"><span>重量</span><button data-change="weight" data-step="-5" type="button" aria-label="减少重量">-</button><output id="weight">${appState.weight} kg</output><button data-change="weight" data-step="5" type="button" aria-label="增加重量">+</button></div><div class="measure"><span>次数</span><button data-change="reps" data-step="-1" type="button" aria-label="减少次数">-</button><output id="reps">${appState.reps} 次</output><button data-change="reps" data-step="1" type="button" aria-label="增加次数">+</button></div></section><section class="effort"><span>主观难度</span><div class="effort-controls">${['偏轻松','合适','偏难'].map((label)=>`<button type="button" data-effort="${label}" aria-pressed="${appState.effort===label}">${label}</button>`).join('')}</div></section></main><div class="sticky-action"><button class="primary" id="complete-set" type="button">完成第 ${appState.currentSet} 组</button><div class="training-tools"><button data-open-adjustment type="button">替换动作</button><button data-open-risk type="button">标记不适</button></div></div>`;
+        el.querySelector('[data-go]').addEventListener('click',()=>go('today'));
+        el.querySelectorAll('[data-set]').forEach((button)=>button.addEventListener('click',()=>{appState.currentSet=Number(button.dataset.set);renderTraining();}));
+        el.querySelectorAll('[data-change]').forEach((button)=>button.addEventListener('click',()=>{const key=button.dataset.change;appState[key]=Math.max(key==='weight'?0:1,appState[key]+Number(button.dataset.step));renderTraining();}));
+        el.querySelectorAll('[data-effort]').forEach((button)=>button.addEventListener('click',()=>{appState.effort=button.dataset.effort;renderTraining();}));
+        el.querySelector('#complete-set').addEventListener('click',()=>go('review')); el.querySelector('[data-open-adjustment]').addEventListener('click',openAdjustmentSheet); el.querySelector('[data-open-risk]').addEventListener('click',openRiskSheet);
+      }
+      function reviewRows(type, list) { return (list||[]).map((line)=>`<div class="review-row ${type}"><i class="review-dot" aria-hidden="true"></i><div><b>${type==='fact'?'事实':type==='observation'?'观察':'仍待确认'}</b><span>${escapeHtml(line)}</span></div></div>`).join(''); }
+      function renderJourney() { const p=getPersona(); const el=document.querySelector('[data-view="journey"]'); el.innerHTML=`${renderTopline("JOURNEY", "MISSION")}<h1>你不是在升级，<br>你在<span>积累证据。</span></h1><p>Mission 只为接下来的 4-6 周服务。长期愿望可以很远，今天的方向必须足够具体。</p><section class="mission-stamp"><b>当前 MISSION</b><h2>${escapeHtml(p.mission.title)}</h2><p>成功证据：${escapeHtml(p.mission.proof)}</p></section><section class="route-list"><div class="route-item"><b>这段路需要看到</b><span>${escapeHtml(p.mission.proof)}</span></div><div class="route-item"><b>不会作为唯一裁判</b><span>${escapeHtml(p.mission.notJudge)}</span></div><div class="route-item"><b>下一次完整复盘</b><span>完成足够的可比较记录后，由你确认是否维持、进阶或恢复。</span></div></section><div class="sticky-action"><button class="primary" data-go="today" type="button">回到今天</button></div>`; el.querySelector('[data-go]').addEventListener('click',()=>go('today')); }
+      function renderReview() {
+        const p=getPersona(); const decision=p.decisions[appState.decision]||p.decisions[0]; const el=document.querySelector('[data-view="review"]');
+        const evidenceRows = (decision.evidence || []).map((item) => `<p>${escapeHtml(item)}</p>`).join('') || '<p>这条路线需要在下一次训练后补充更多记录。</p>';
+        const unknownRows = (decision.unknowns || []).map((item) => `<p>${escapeHtml(item)}</p>`).join('') || '<p>暂无额外待确认项。</p>';
+        el.innerHTML=`${renderTopline("REVIEW", "记录与解释")}<h1>发生了什么，<br>和它<span>可能意味着什么。</span></h1><p>系统不把单个数字包装成答案。先看事实，再看观察和仍需验证的部分。</p><section class="review-receipt">${reviewRows('fact',p.review.facts)}${reviewRows('observation',p.review.observations)}${reviewRows('unknown',p.review.unknowns)}</section><section class="decision-list"><div class="kicker" style="margin:17px 0 3px">下一段的候选路线</div>${p.decisions.map((item,index)=>`<button class="decision-option" data-decision="${index}" aria-pressed="${appState.decision===index}" type="button"><i aria-hidden="true"></i><span><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.description)}</span></span></button>`).join('')}</section><section class="decision-evidence"><h2>这条路线依据了什么</h2>${evidenceRows}<h3>还需要确认什么</h3>${unknownRows}</section><div class="sticky-action"><button class="primary" id="confirm-decision" type="button">确认这条下一步</button></div>`;
+        el.querySelectorAll('[data-decision]').forEach((button)=>button.addEventListener('click',()=>{appState.decision=Number(button.dataset.decision);renderReview();}));
+        el.querySelector('#confirm-decision').addEventListener('click',()=>go('commit'));
+      }
+      function renderCommit() { const p=getPersona(); const decision=p.decisions[appState.decision]||p.decisions[0]; const el=document.querySelector('[data-view="commit"]'); el.innerHTML=`${renderTopline("NEXT", "由你确认")}<h1>下一段路，<br>已经<span>写入计划。</span></h1><p>这不是不可更改的承诺。下一次训练、时间变化或新的体感都可以让它重新被讨论。</p><section class="seal"><b>你的下一步</b><h2>${escapeHtml(decision.title)}</h2><p>${escapeHtml(decision.description)}</p></section><section class="route-list"><div class="route-item"><b>系统会记住</b><span>当前选择以及支持它的训练证据。</span></div><div class="route-item"><b>系统不会假装知道</b><span>${escapeHtml(p.mission.notJudge)}</span></div></section><div class="sticky-action"><button class="primary" data-go="today" type="button">回到今天</button></div>`; el.querySelector('[data-go]').addEventListener('click',()=>go('today')); }
+      function renderSupport() { const el=document.querySelector('[data-view="support"]');el.innerHTML=`${renderTopline("SAFE", "暂停训练建议")}<h1>今天先不要<br>用训练证明什么。</h1><p>你报告的情况需要优先于任何训练计划。产品不能诊断原因，也不会用完成度、积分或激励催促你继续。</p><section class="support-rules"><div>停止本次高强度训练建议。</div><div>你可以保留记录，方便之后重新说明限制。</div><div>症状持续、加重或让你担心时，请寻求适合的专业支持。</div></section><div class="sticky-action"><button class="primary" data-go="choose" type="button">回到状态选择</button></div>`; el.querySelector('[data-go]').addEventListener('click',()=>go('choose')); }
+      function openRiskSheet() { const sheet=document.querySelector('#risk-sheet');sheet.innerHTML=`<h2>先暂停高强度训练。</h2><p>疼痛、持续不适或异常疲劳不应被当作完成训练的代价。你可以记录它、选择恢复活动，或在需要时咨询合适的专业人士。</p><button data-close-sheet type="button">我知道了</button>`;sheet.classList.add('is-open');sheet.querySelector('[data-close-sheet]').addEventListener('click',()=>sheet.classList.remove('is-open')); }
+      function openAdjustmentSheet() { const sheet=document.querySelector('#risk-sheet');sheet.innerHTML=`<h2>记录一个调整</h2><p>训练中的调整不是失败。系统会保留原计划、调整类型和原因，供下次复盘时解释。</p><button class="sheet-option" data-adjustment="换成等价动作" type="button">换成等价动作</button><button class="sheet-option sheet-secondary" data-adjustment="跳过并记录原因" type="button">跳过并记录原因</button>`;sheet.classList.add('is-open');sheet.querySelectorAll('[data-adjustment]').forEach((button)=>button.addEventListener('click',()=>{appState.adjustment=button.dataset.adjustment; sheet.classList.remove('is-open'); renderTraining();})); }
+      function render(view) { if(view==='choose') return renderChoose(); if(view==='calibrate') return renderCalibrate(); if(view==='today') return renderToday(); if(view==='training') return renderTraining(); if(view==='journey') return renderJourney(); if(view==='review') return renderReview(); if(view==='commit') return renderCommit(); if(view==='support') return renderSupport(); }
+      nav.forEach((button)=>button.addEventListener('click',()=>{ if(!appState.persona) return go('choose'); if(button.dataset.nav==='training' && appState.view!=='training') { appState.plan='full'; appState.currentSet=3; appState.adjustment=null; return go('training'); } go(button.dataset.nav); }));
+      renderChoose();
+    </script>
+  </body>
+</html>

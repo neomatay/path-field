@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>阶段野外记录 - 海报构图 v0.2</title>
+    <style>
+      :root {
+        --paper: #f2e4be;
+        --paper-deep: #e5d3a7;
+        --ink: #1d2a24;
+        --forest: #1e583d;
+        --lake: #087c80;
+        --ochre: #c87531;
+        --sun: #eaa63c;
+        --line: rgba(29, 42, 36, 0.46);
+      }
+
+      * { box-sizing: border-box; }
+      html { background: #172a25; }
+      body {
+        background: #172a25;
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+        margin: 0;
+      }
+      button { font: inherit; }
+      h1, h2, h3, p { margin: 0; }
+
+      .page { margin: 0 auto; max-width: 1980px; padding: 26px; }
+      .print {
+        background: var(--paper);
+        box-shadow: 0 28px 60px rgba(0, 0, 0, 0.24);
+        min-height: calc(100vh - 52px);
+        overflow: hidden;
+        position: relative;
+      }
+      .print::after {
+        border: 1px solid rgba(29, 42, 36, 0.52);
+        content: "";
+        inset: 14px;
+        pointer-events: none;
+        position: absolute;
+        z-index: 6;
+      }
+
+      .topbar {
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: 1.2fr 1fr auto;
+        min-height: 104px;
+        padding: 0 52px;
+        position: relative;
+        z-index: 7;
+      }
+      .mark { align-items: center; display: flex; gap: 13px; font-size: 18px; font-weight: 790; }
+      .mark-glyph { height: 42px; position: relative; width: 34px; }
+      .mark-glyph::before, .mark-glyph::after { background: var(--forest); content: ""; left: 50%; position: absolute; transform: translateX(-50%); }
+      .mark-glyph::before { clip-path: polygon(50% 0, 100% 55%, 74% 55%, 100% 100%, 0 100%, 26% 55%, 0 55%); height: 35px; top: 0; width: 32px; }
+      .mark-glyph::after { bottom: 0; height: 14px; width: 4px; }
+      .topbar nav { display: flex; gap: clamp(18px, 3vw, 48px); justify-content: center; }
+      .topbar nav a, .user-state {
+        color: var(--ink);
+        font-family: "Arial Narrow", "Avenir Next Condensed", -apple-system, sans-serif;
+        font-size: 13px;
+        font-stretch: condensed;
+        font-weight: 760;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+      .topbar nav a:first-child { border-bottom: 2px solid var(--forest); padding-bottom: 4px; }
+      .user-state { align-items: center; display: flex; gap: 9px; justify-self: end; }
+      .user-dot { background: var(--forest); border: 2px solid var(--ink); border-radius: 50%; height: 19px; width: 19px; }
+
+      .hero { display: grid; grid-template-columns: minmax(360px, 42%) minmax(0, 58%); min-height: 600px; position: relative; z-index: 1; }
+      .copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 58px clamp(42px, 7vw, 138px) 50px clamp(42px, 7vw, 132px);
+      }
+      .copy h1 {
+        font-family: "Arial Narrow", "Avenir Next Condensed", -apple-system, sans-serif;
+        font-size: clamp(52px, 6.3vw, 106px);
+        font-stretch: condensed;
+        font-weight: 900;
+        letter-spacing: 0;
+        line-height: 0.95;
+        max-width: 600px;
+      }
+      .copy-rule { align-items: center; display: flex; gap: 12px; margin: 34px 0 22px; max-width: 480px; }
+      .copy-rule::before, .copy-rule::after { background: var(--forest); content: ""; height: 2px; }
+      .copy-rule::before { flex: 1; }
+      .copy-rule::after { flex: .72; }
+      .copy-rule b { background: var(--forest); height: 9px; transform: rotate(45deg); width: 9px; }
+      .copy > p { font-size: 16px; line-height: 1.72; max-width: 430px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 29px; }
+      .action { border: 1px solid var(--forest); color: var(--forest); font-family: "Arial Narrow", "Avenir Next Condensed", -apple-system, sans-serif; font-size: 14px; font-weight: 790; letter-spacing: 0.08em; padding: 14px 20px; text-decoration: none; text-transform: uppercase; transition: background-color 180ms ease, color 180ms ease; }
+      .action.primary { background: var(--forest); color: var(--paper); }
+      .action:hover, .action:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
+
+      .art {
+        background: var(--lake);
+        border-left: 1px solid var(--line);
+        min-height: 600px;
+        overflow: hidden;
+        position: relative;
+      }
+      #park-art { display: block; height: 100%; left: 0; position: absolute; top: 0; width: 100%; }
+      .art-caption {
+        align-items: end;
+        bottom: 30px;
+        color: var(--paper);
+        display: flex;
+        justify-content: space-between;
+        left: 32px;
+        position: absolute;
+        right: 32px;
+        text-shadow: 0 1px 0 rgba(0, 0, 0, 0.17);
+        z-index: 2;
+      }
+      .art-caption span { display: block; font-size: 12px; line-height: 1.4; }
+      .art-caption b { font-family: "Arial Narrow", "Avenir Next Condensed", -apple-system, sans-serif; font-size: 16px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+      .evidence-strip {
+        background: var(--forest);
+        color: var(--paper);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        min-height: 130px;
+        padding: 0 52px;
+        position: relative;
+        z-index: 7;
+      }
+      .evidence {
+        align-items: center;
+        display: flex;
+        gap: 17px;
+        min-width: 0;
+        padding: 22px 28px;
+      }
+      .evidence + .evidence { border-left: 1px solid rgba(242, 228, 190, 0.36); }
+      .evidence-mark { flex: 0 0 31px; height: 31px; position: relative; }
+      .evidence-mark.fact::before { border: 2px solid var(--paper); border-radius: 50%; content: ""; height: 25px; left: 1px; position: absolute; top: 1px; width: 25px; }
+      .evidence-mark.fact::after { border-bottom: 2px solid var(--paper); border-left: 2px solid var(--paper); content: ""; height: 6px; left: 9px; position: absolute; top: 8px; transform: rotate(-45deg); width: 13px; }
+      .evidence-mark.observe::before { border-bottom: 2px solid var(--paper); border-left: 2px solid var(--paper); bottom: 4px; content: ""; height: 21px; left: 5px; position: absolute; transform: skewY(-28deg); width: 18px; }
+      .evidence-mark.observe::after { background: var(--sun); border-radius: 50%; content: ""; height: 7px; position: absolute; right: 1px; top: 1px; width: 7px; }
+      .evidence-mark.open::before { border: 2px solid var(--paper); border-radius: 50%; content: ""; height: 23px; left: 3px; position: absolute; top: 3px; width: 23px; }
+      .evidence-mark.open::after { background: var(--forest); content: ""; height: 12px; position: absolute; right: 0; top: 0; transform: rotate(45deg); width: 12px; }
+      .evidence b { color: var(--sun); display: block; font-size: 12px; font-weight: 780; margin-bottom: 4px; }
+      .evidence span { display: block; font-size: 14px; line-height: 1.45; }
+
+      .lower {
+        display: grid;
+        grid-template-columns: 1.25fr .75fr;
+        min-height: 205px;
+        position: relative;
+        z-index: 2;
+      }
+      .route-note { padding: 35px 52px 45px clamp(42px, 7vw, 132px); }
+      .route-note h2 { font-size: 25px; font-weight: 780; line-height: 1.15; }
+      .route-note p { font-size: 14px; line-height: 1.65; margin-top: 11px; max-width: 620px; }
+      .report-meta { border-left: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; padding: 35px 52px 45px; }
+      .meta-cell + .meta-cell { border-left: 1px solid var(--line); padding-left: 26px; }
+      .meta-cell b { color: var(--forest); display: block; font-size: 12px; margin-bottom: 7px; }
+      .meta-cell span { font-size: 14px; line-height: 1.5; }
+
+      .toast { background: var(--ink); bottom: 30px; color: var(--paper); display: none; font-size: 14px; left: 50%; padding: 13px 17px; position: fixed; transform: translateX(-50%); z-index: 10; }
+      .toast.is-visible { display: block; }
+
+      @media (max-width: 900px) {
+        .page { padding: 0; }
+        .print { min-height: 100vh; }
+        .print::after { inset: 9px; }
+        .topbar { grid-template-columns: 1fr auto; min-height: 76px; padding: 0 28px; }
+        .topbar nav { display: none; }
+        .hero { grid-template-columns: 1fr; }
+        .copy { min-height: 430px; padding: 78px 34px 44px; }
+        .copy h1 { font-size: clamp(52px, 13vw, 82px); }
+        .art { border-left: 0; min-height: min(82vw, 580px); }
+        .evidence-strip { grid-template-columns: 1fr; padding: 0 28px; }
+        .evidence + .evidence { border-left: 0; border-top: 1px solid rgba(242, 228, 190, 0.36); }
+        .evidence { padding: 22px 0; }
+        .lower { grid-template-columns: 1fr; }
+        .route-note { padding: 34px 34px 38px; }
+        .report-meta { border-left: 0; border-top: 1px solid var(--line); padding: 28px 34px 38px; }
+      }
+
+      @media (max-width: 480px) {
+        .mark { font-size: 15px; gap: 9px; }
+        .mark-glyph { transform: scale(.8); transform-origin: left center; width: 27px; }
+        .user-state { font-size: 11px; }
+        .copy { padding-left: 28px; padding-right: 28px; }
+        .copy > p { font-size: 15px; }
+        .action { flex: 1; padding-left: 14px; padding-right: 14px; text-align: center; }
+        .art-caption { bottom: 21px; left: 23px; right: 23px; }
+        .report-meta { gap: 16px; grid-template-columns: 1fr; }
+        .meta-cell + .meta-cell { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      THESIS: A stage report is an original national-park print where image and evidence share the page; it refuses the dashboard with a poster thumbnail.
+      OWN-WORLD: Four-color field print on warm paper, painted landscape canvas, fir-green evidence rail, hard print rules and spacious condensed display type.
+      STORY: The user sees a completed training stage, the evidence that supports it, its uncertainty, then chooses the next review or share action.
+      FIRST VIEWPORT: A large factual stage heading occupies the paper left; an original landscape fills the right; a three-part evidence rail closes the composition.
+      FORM: Field-report broadside, derived from WPA print grammar for a mobile-led product's web review surface; seed 6179fda8.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+    -->
+    <main class="page">
+      <section class="print" aria-label="阶段野外记录样稿">
+        <header class="topbar">
+          <div class="mark"><span class="mark-glyph" aria-hidden="true"></span><span>PATH / FIELD</span></div>
+          <nav aria-label="主导航"><a href="#report">阶段记录</a><a href="#evidence">训练证据</a><a href="#next">下一段</a></nav>
+          <div class="user-state"><span class="user-dot" aria-hidden="true"></span><span>阶段 03</span></div>
+        </header>
+
+        <section class="hero" id="report">
+          <div class="copy">
+            <h1>完成八次<br />可比较的<br />下肢训练</h1>
+            <div class="copy-rule" aria-hidden="true"><b></b></div>
+            <p>这是一份阶段野外记录，不是身体变化的宣传结论。它标记已发生的训练，也留下仍需要继续观察的部分。</p>
+            <div class="actions">
+              <a class="action primary" href="#evidence">查看完整复盘</a>
+              <a class="action" id="share-action" href="#share">生成阶段摘要</a>
+            </div>
+          </div>
+          <div class="art" role="img" aria-label="原创丝网印刷风格的湖泊、森林、山脊和蒸汽喷泉风景，象征一段已被记录的训练路线">
+            <canvas id="park-art"></canvas>
+            <div class="art-caption"><span>MISSION 03 · 2026.07.01 - 2026.08.14</span><b>LOWER BODY FIELD</b></div>
+          </div>
+        </section>
+
+        <section class="evidence-strip" id="evidence" aria-label="阶段证据">
+          <div class="evidence"><span class="evidence-mark fact" aria-hidden="true"></span><div><b>事实</b><span>完成 8 次可比较的下肢训练。</span></div></div>
+          <div class="evidence"><span class="evidence-mark observe" aria-hidden="true"></span><div><b>观察</b><span>腿举在相近重量区间的完成度更稳定。</span></div></div>
+          <div class="evidence"><span class="evidence-mark open" aria-hidden="true"></span><div><b>仍待确认</b><span>体重趋势不足以判断身体组成变化。</span></div></div>
+        </section>
+
+        <section class="lower" id="next">
+          <div class="route-note"><h2>下一段，仍由你决定怎么走。</h2><p>继续积累可比较表现、尝试小幅加重，或先安排恢复周。系统只说明每条路径需要什么证据，不替你替身体下结论。</p></div>
+          <div class="report-meta"><div class="meta-cell"><b>记录来源</b><span>训练日志与主观体感</span></div><div class="meta-cell"><b>复盘边界</b><span>不判断体脂、外形或健康状况</span></div></div>
+        </section>
+      </section>
+    </main>
+    <div class="toast" role="status">阶段摘要已准备好，分享前可隐藏体重与体感备注。</div>
+
+    <script>
+      const canvas = document.querySelector("#park-art");
+      const ctx = canvas.getContext("2d");
+      const seed = 30607;
+      function random(index) {
+        const x = Math.sin(index * 12.9898 + seed) * 43758.5453;
+        return x - Math.floor(x);
+      }
+      function polygon(points, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        points.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+        ctx.closePath();
+        ctx.fill();
+      }
+      function tree(x, base, height, color, index) {
+        const width = height * (0.17 + random(index) * 0.07);
+        ctx.fillStyle = color;
+        ctx.fillRect(x - Math.max(1, width * 0.07), base - height * 0.16, Math.max(2, width * 0.14), height * 0.18);
+        const layers = 5 + Math.floor(random(index + 4) * 3);
+        for (let i = 0; i < layers; i++) {
+          const y = base - height + (i * height * 0.68) / layers;
+          const half = (width * (i + 2)) / (layers + 2);
+          polygon([[x, y], [x - half, y + height * 0.27], [x + half, y + height * 0.27]], color);
+        }
+      }
+      function line(x1, y1, x2, y2, color, width, alpha = 1) {
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      function paint() {
+        const box = canvas.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(1, Math.floor(box.width * ratio));
+        canvas.height = Math.max(1, Math.floor(box.height * ratio));
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        const w = box.width;
+        const h = box.height;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "#087c80";
+        ctx.fillRect(0, 0, w, h);
+
+        // A limited four-ink landscape: dense enough to read as a scene, not as a UI illustration.
+        polygon([[0, h * .7], [w * .15, h * .59], [w * .29, h * .63], [w * .46, h * .48], [w * .6, h * .59], [w * .75, h * .5], [w, h * .62], [w, h], [0, h]], "#2c6a49");
+        polygon([[0, h * .76], [w * .21, h * .66], [w * .37, h * .74], [w * .54, h * .54], [w * .69, h * .7], [w * .86, h * .57], [w, h * .67], [w, h], [0, h]], "#1d523a");
+
+        // Geyser, built in overlapping opaque inks and irregular flecks rather than gradients.
+        ctx.fillStyle = "#efe1bb";
+        ctx.beginPath();
+        ctx.moveTo(w * .59, h * .68);
+        ctx.bezierCurveTo(w * .55, h * .53, w * .64, h * .48, w * .6, h * .31);
+        ctx.bezierCurveTo(w * .56, h * .18, w * .67, h * .13, w * .63, h * .02);
+        ctx.bezierCurveTo(w * .73, h * .18, w * .66, h * .35, w * .7, h * .47);
+        ctx.bezierCurveTo(w * .72, h * .57, w * .65, h * .61, w * .69, h * .7);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#d7d1ac";
+        for (let i = 0; i < 180; i++) {
+          const rx = w * (.55 + random(i + 40) * .16);
+          const ry = h * (.05 + random(i + 90) * .58);
+          const radius = 1 + random(i + 3) * 3.8;
+          ctx.beginPath(); ctx.arc(rx, ry, radius, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Tree line makes the landscape feel inhabited and gives the print a middle distance.
+        for (let i = 0; i < 49; i++) {
+          const x = (i / 48) * w;
+          const base = h * (.64 + random(i + 100) * .095);
+          const height = h * (.07 + random(i + 150) * .16);
+          tree(x, base, height, i % 3 ? "#1b5139" : "#173d30", i + 200);
+        }
+
+        polygon([[0, h * .73], [w * .18, h * .67], [w * .35, h * .76], [w * .53, h * .69], [w * .7, h * .77], [w * .84, h * .68], [w, h * .74], [w, h], [0, h]], "#c87531");
+        for (let i = 0; i < 52; i++) {
+          const y = h * (.75 + random(i + 400) * .22);
+          const x = random(i + 420) * w;
+          const length = w * (.035 + random(i + 480) * .11);
+          line(x, y, Math.min(w, x + length), y + (random(i + 500) - .5) * 6, i % 2 ? "#f2e4be" : "#eaa63c", 1.3, .88);
+        }
+        polygon([[0, h * .86], [w * .2, h * .82], [w * .39, h * .88], [w * .57, h * .81], [w * .78, h * .87], [w, h * .82], [w, h], [0, h]], "#1d2a24");
+
+        // A route only appears after the terrain exists. It never stands in for the terrain.
+        ctx.strokeStyle = "#eaa63c";
+        ctx.lineWidth = 2.1;
+        ctx.beginPath();
+        ctx.moveTo(w * .23, h * .92);
+        ctx.bezierCurveTo(w * .3, h * .84, w * .42, h * .84, w * .45, h * .75);
+        ctx.bezierCurveTo(w * .49, h * .65, w * .54, h * .66, w * .57, h * .58);
+        ctx.stroke();
+        ctx.fillStyle = "#eaa63c";
+        ctx.beginPath(); ctx.arc(w * .57, h * .58, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#1d2a24";
+        ctx.beginPath(); ctx.arc(w * .57, h * .58, 2.5, 0, Math.PI * 2); ctx.fill();
+
+        // Fine uneven ink is a raster material layer, not a CSS decoration.
+        for (let i = 0; i < Math.floor(w * h / 38); i++) {
+          const x = random(i + 700) * w;
+          const y = random(i + 1000) * h;
+          ctx.fillStyle = i % 5 ? "rgba(242,228,190,.09)" : "rgba(29,42,36,.08)";
+          const dot = random(i + 1300) < .86 ? 1 : 2;
+          ctx.fillRect(x, y, dot, dot);
+        }
+      }
+      const painter = new ResizeObserver(paint);
+      painter.observe(canvas);
+      paint();
+
+      const toast = document.querySelector(".toast");
+      document.querySelector("#share-action").addEventListener("click", (event) => {
+        event.preventDefault();
+        toast.classList.add("is-visible");
+        window.setTimeout(() => toast.classList.remove("is-visible"), 3200);
+      });
+    </script>
+  </body>
+</html>

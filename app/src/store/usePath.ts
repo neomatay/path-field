@@ -1,0 +1,120 @@
+/**
+ * 应用状态：从 IndexedDB 加载 Mission / Program / Session，提供创建与保存。
+ * M2 范围：首次进入选模板 -> 生成 Mission + Program；训练会话的创建与保存。
+ */
+import { useCallback, useEffect, useState } from 'react'
+import { getAll, put } from './db'
+import { TEMPLATES, instantiateProgram, type ProgramTemplate } from '../data/templates'
+import type { Mission, Program, Session } from '../core/types'
+
+export function uid(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+const MISSION_TITLES: Record<ProgramTemplate['path'], { title: string; evidences: Mission['successEvidence'] }> = {
+  returning: {
+    title: '重新建立训练节奏',
+    evidences: [
+      { statement: '每周完成至少 1 次训练', classification: 'fact', frequency: '每周' },
+      { statement: '关键动作形成第一条可比较记录', classification: 'observation', frequency: '每次训练' },
+    ],
+  },
+  routine: {
+    title: '稳定完成每周两次训练',
+    evidences: [
+      { statement: '每周完成 2 次训练（至少 1 次为短版亦可）', classification: 'fact', frequency: '每周' },
+      { statement: 'A/B 关键动作积累可比较的工作组', classification: 'observation', frequency: '每次训练' },
+    ],
+  },
+  progressing: {
+    title: '补齐下肢与背部，积累可比较证据',
+    evidences: [
+      { statement: '每周完成 2-3 次计划训练', classification: 'fact', frequency: '每周' },
+      { statement: '腿举 / 臀推 / 引体在相近条件下积累可比较工作组', classification: 'observation', frequency: '每次训练' },
+    ],
+  },
+}
+
+export function usePath() {
+  const [missions, setMissions] = useState<Mission[]>([])
+  const [programs, setPrograms] = useState<Program[]>([])
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    void (async () => {
+      const [m, p, s] = await Promise.all([
+        getAll<Mission>('missions'),
+        getAll<Program>('programs'),
+        getAll<Session>('sessions'),
+      ])
+      setMissions(m.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)))
+      setPrograms(p)
+      setSessions(s.sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt)))
+      setLoaded(true)
+    })()
+  }, [])
+
+  const activeMission = missions.find((m) => m.status === 'active')
+  const activeProgram =
+    activeMission === undefined
+      ? undefined
+      : programs.find((p) => p.status === 'active' && p.missionId === activeMission.id)
+
+  const startWithTemplate = useCallback(async (template: ProgramTemplate) => {
+    const now = new Date().toISOString()
+    const missionId = uid()
+    const meta = MISSION_TITLES[template.path]
+    const mission: Mission = {
+      id: missionId,
+      createdAt: now,
+      title: meta.title,
+      userIntent: template.description,
+      startDate: now,
+      reviewDate: new Date(Date.now() + 28 * 86400000).toISOString(),
+      successEvidence: meta.evidences,
+      notTheJudge: ['体重', '连续训练天数'],
+      timeAndEnvironment: '以当前可用的场地与时间执行，短版与恢复版均为计划内选择。',
+      boundaries: ['标记不适的动作不作为加负荷依据。', 'urgent 信号时停止本计划。'],
+      assumptions: ['当前节奏在你的时间里是可持续的。'],
+      status: 'active',
+    }
+    const program: Program = {
+      id: uid(),
+      createdAt: now,
+      ...instantiateProgram(template, missionId),
+      status: 'active',
+    }
+    await put('missions', mission)
+    await put('programs', program)
+    setMissions((prev) => [mission, ...prev])
+    setPrograms((prev) => [...prev, program])
+  }, [])
+
+  const saveSession = useCallback(async (s: Session) => {
+    await put('sessions', s)
+    setSessions((prev) => [s, ...prev.filter((x) => x.id !== s.id)].sort(
+      (a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt),
+    ))
+  }, [])
+
+  /** 下一次计划训练：按完成次数轮换模板内的 session */
+  const nextPlannedSessionId =
+    activeProgram === undefined || activeProgram.sessions.length === 0
+      ? undefined
+      : activeProgram.sessions[sessions.length % activeProgram.sessions.length].id
+
+  return {
+    loaded,
+    missions,
+    sessions,
+    activeMission,
+    activeProgram,
+    nextPlannedSessionId,
+    templateChoices: TEMPLATES,
+    startWithTemplate,
+    saveSession,
+  }
+}
