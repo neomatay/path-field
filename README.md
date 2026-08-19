@@ -32,7 +32,7 @@
 ```bash
 cd app
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:5173/path-field/
 npm test           # 领域规则单元测试（vitest）
 npm run build      # 生产构建（含 PWA）
 ```

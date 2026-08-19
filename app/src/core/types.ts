@@ -78,6 +78,12 @@ export interface Mission {
   createdAt: ISO8601;
   title: string;
   userIntent: string; // 用户原话摘要
+  /** 入口追问：主要目标，如 "增肌" */
+  goal?: string;
+  /** 入口追问：每周想练几次（仅记录与展示，不改变模板） */
+  weeklyTarget?: number;
+  /** 入口追问：需要注意的部位，如 ["膝", "腰"] */
+  cautionAreas?: string[];
   startDate: ISO8601;
   /** 开始后 28-42 天 */
   reviewDate: ISO8601;
@@ -189,6 +195,15 @@ export interface SessionAdjustment {
   source: 'user';
 }
 
+/** 训练前状态签到（今天页采集，随 Session 落库，供分析与规则使用） */
+export interface SessionCheckIn {
+  /** 昨晚睡眠时长（小时） */
+  sleepHours?: number;
+  readiness?: 'low' | 'ok' | 'good' | 'unknown';
+  /** 当天可用分钟数 */
+  availableMinutes?: number;
+}
+
 export interface Session {
   id: string;
   createdAt: ISO8601;
@@ -200,12 +215,25 @@ export interface Session {
   selectedVariant: SessionVariantChoice;
   actualBlocks: ActualBlock[];
   adjustments: SessionAdjustment[];
+  checkIn?: SessionCheckIn;
   checkOut: {
     discomfort: DiscomfortLevel | 'unknown';
     energy?: 'low' | 'ok' | 'good';
     willingToContinue?: boolean;
   };
   safetyEvents: string[]; // 触发的 ruleId 列表；无事件为空数组
+}
+
+// ---------- BodyMetric（身体数据时间序列） ----------
+
+export interface BodyMetric {
+  id: string;
+  recordedAt: ISO8601;
+  weightKg?: number;
+  waistCm?: number;
+  hipCm?: number;
+  bodyFatPct?: number;
+  note?: string;
 }
 
 // ---------- Evidence ----------

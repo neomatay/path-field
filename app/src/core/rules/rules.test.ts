@@ -60,6 +60,16 @@ describe('版本选择', () => {
     expect(r.ruleId).toBe('VARIANT-RECOVERY-03');
   });
 
+  it('睡眠不足 6 小时 -> 短版（VARIANT-SHORT-02），即使时间充足', () => {
+    const r = evaluateVariant({
+      riskLevel: 'none', availableMinutes: 55, fullVariantMinutes: full,
+      readiness: 'ok', sleepBand: 'lt6',
+    });
+    expect(r.ruleId).toBe('VARIANT-SHORT-02');
+    expect(r.recommended).toBe('short');
+    expect(r.selectable).not.toContain('full');
+  });
+
   it('用户改选短版被尊重（VARIANT-USER-04）', () => {
     const r = evaluateVariant({
       riskLevel: 'none', availableMinutes: 55, fullVariantMinutes: full, readiness: 'good',

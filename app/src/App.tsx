@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import { downloadSnapshot, exportSnapshot } from './store/db'
-import { usePath } from './store/usePath'
+import { usePath, type OnboardingAnswers } from './store/usePath'
 import type { ProgramTemplate } from './data/templates'
 import type { Session } from './core/types'
 import { Today } from './ui/Today'
@@ -18,11 +18,20 @@ const TEMPLATE_LABEL: Record<ProgramTemplate['path'], string> = {
   progressing: '我已有规律训练，想补短板并看懂进步',
 }
 
+const GOAL_OPTIONS = ['减脂', '增肌', '塑形', '体能', '更健康的感觉']
+const WEEKLY_OPTIONS = [1, 2, 3]
+const CAUTION_OPTIONS = ['无', '膝', '腰', '肩', '其他']
+
 function App() {
-  const { loaded, activeMission, activeProgram, nextPlannedSessionId, sessions, programSessions, missions, templateChoices, startWithTemplate, archiveActivePlan, saveSession } = usePath()
+  const {
+    loaded, activeMission, activeProgram, nextPlannedSessionId, sessions, programs,
+    programSessions, missions, bodyMetrics, templateChoices, startWithTemplate,
+    archiveActivePlan, saveSession, saveBodyMetric,
+  } = usePath()
   const [screen, setScreen] = useState<Screen>('today')
   const [draft, setDraft] = useState<Session | null>(null)
   const [pendingTemplate, setPendingTemplate] = useState<ProgramTemplate | null>(null)
+  const [pendingAnswers, setPendingAnswers] = useState<OnboardingAnswers | null>(null)
   const [confirmSwitch, setConfirmSwitch] = useState(false)
   const hasHistory = missions.length > 0
 
@@ -34,9 +43,26 @@ function App() {
     return <div className="app"><p className="body">加载本地数据…</p></div>
   }
 
-  // ---------- 入口第一步：选路径；第二步：看完整计划再开始 ----------
+  // ---------- 入口：选路径 -> 三个快问 -> 看完整计划再开始 ----------
   if (activeMission === undefined || activeProgram === undefined) {
-    if (pendingTemplate !== null) {
+    if (pendingTemplate !== null && pendingAnswers === null) {
+      return (
+        <div className="app">
+          <header className="topline">
+            <span className="label">PATH / FIELD</span>
+            <span className="label">v0.2 M2</span>
+          </header>
+          <main className="stage">
+            <QuickQuestions
+              onSubmit={(answers) => setPendingAnswers(answers)}
+              onBack={() => setPendingTemplate(null)}
+            />
+          </main>
+        </div>
+      )
+    }
+
+    if (pendingTemplate !== null && pendingAnswers !== null) {
       const preview = templatePreview(pendingTemplate)
       return (
         <div className="app">
@@ -46,9 +72,9 @@ function App() {
           </header>
           <main className="stage">
             <section className="mission">
-              <p className="label">确认之前，先看清整份计划</p>
+              <p className="label">计划预览</p>
               <h1>{preview.title}</h1>
-              <p className="body">你的原话意图：{preview.intent}</p>
+              {pendingAnswers.goal !== undefined && <p className="body">目标：{pendingAnswers.goal}</p>}
             </section>
             <JourneyPreviewSection template={pendingTemplate} />
             <section className="entry-actions">
@@ -56,15 +82,16 @@ function App() {
                 type="button"
                 className="primary"
                 onClick={() => {
-                  void startWithTemplate(pendingTemplate)
+                  void startWithTemplate(pendingTemplate, pendingAnswers)
                   setPendingTemplate(null)
+                  setPendingAnswers(null)
                   setScreen('journey')
                 }}
               >
                 确认开始这份计划
               </button>
-              <button type="button" className="ghost" onClick={() => setPendingTemplate(null)}>
-                返回换一条路径
+              <button type="button" className="ghost" onClick={() => setPendingAnswers(null)}>
+                返回改答案
               </button>
             </section>
           </main>
@@ -82,10 +109,7 @@ function App() {
           <section className="mission entry-hero">
             <p className="label">从这里开始</p>
             <h1>先看清整份计划，<br />再决定今天练什么</h1>
-            <p className="body">
-              选一个起点，下一屏会展示完整计划：每节课的意图与动作、
-              完整 / 短版 / 恢复三个版本、进阶与安全规则。确认之后，才开始第一次训练。
-            </p>
+            <p className="body">选一个起点，先看完整计划再开始。</p>
           </section>
           <p className="label entry-q">你现在在哪里？</p>
           {templateChoices.map((t, i) => (
@@ -102,8 +126,8 @@ function App() {
             </button>
           ))}
           <p className="body entry-note">
-            这不是等级测试，只是入口。三个入口都通向同一条主路：中断不清零、不补债，随时可以换。
-            {hasHistory ? '你之前的训练记录不会受影响，会一直保留在「记录」里。' : ''}
+            随时可换路径，记录不删。
+            {hasHistory ? '之前的记录都还在「记录」里。' : ''}
           </p>
         </main>
       </div>
@@ -111,6 +135,12 @@ function App() {
   }
 
   const inFocus = screen === 'training' || screen === 'receipt'
+
+  /** 本周是否已记录过体重（用于「今天」页的一行轻提示） */
+  const monday = new Date()
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+  monday.setHours(0, 0, 0, 0)
+  const thisWeekHasWeight = bodyMetrics.some((b) => Date.parse(b.recordedAt) >= monday.getTime())
 
   return (
     <div className="app">
@@ -126,14 +156,12 @@ function App() {
               <p className="label">当前 Mission · {new Date(activeMission.reviewDate).toLocaleDateString('zh-CN')} 复盘</p>
               <h1>{activeMission.title}</h1>
               <div className="mission-rule" aria-hidden="true" />
-              <p className="body">
-                成功证据：{activeMission.successEvidence.map((e) => e.statement).join('；')}。
-                体重不作为本阶段唯一裁判。
-              </p>
             </section>
             <Today
               program={activeProgram}
               nextPlannedSessionId={nextPlannedSessionId}
+              showBodyPrompt={!thisWeekHasWeight}
+              onGoRecords={() => setScreen('records')}
               onStartTraining={(s) => {
                 setDraft(s)
                 void saveSession(s)
@@ -155,8 +183,23 @@ function App() {
           </>
         )}
 
-        {screen === 'journey' && <Journey mission={activeMission} program={activeProgram} sessionsDone={programSessions.length} />}
-        {screen === 'records' && <Records sessions={sessions} />}
+        {screen === 'journey' && (
+          <Journey
+            mission={activeMission}
+            program={activeProgram}
+            sessions={sessions}
+            programs={programs}
+            sessionsDone={programSessions.length}
+          />
+        )}
+        {screen === 'records' && (
+          <Records
+            sessions={sessions}
+            programs={programs}
+            bodyMetrics={bodyMetrics}
+            onSaveBodyMetric={(b) => void saveBodyMetric(b)}
+          />
+        )}
 
         {screen === 'training' && draft !== null && (
           <Training
@@ -174,6 +217,7 @@ function App() {
         {screen === 'receipt' && draft !== null && (
           <Receipt
             session={draft}
+            history={sessions}
             onDone={() => {
               setDraft(null)
               setScreen('today')
@@ -222,15 +266,108 @@ function App() {
           </button>
         )}
         <p className="body">
-          本地优先：数据仅存于本机。建议添加到主屏幕并定期导出。
-          换路径不删任何训练记录——它们是事实，会一直留在「记录」里。
+          数据只存本机，记得定期导出。
         </p>
       </footer>
     </div>
   )
 }
 
-/** 入口第二步：给未创建的计划做一个轻量预览（不落库，点确认才创建） */
+/** 入口第二步：三个快问（约 15 秒，都可跳过），答案随 Mission 落库 */
+function QuickQuestions({ onSubmit, onBack }: { onSubmit: (a: OnboardingAnswers) => void; onBack: () => void }) {
+  const [goal, setGoal] = useState<string | undefined>()
+  const [weeklyTarget, setWeeklyTarget] = useState<number | undefined>()
+  const [cautionAreas, setCautionAreas] = useState<string[]>([])
+
+  const toggleCaution = (c: string) => {
+    if (c === '无') {
+      setCautionAreas(['无'])
+      return
+    }
+    setCautionAreas((prev) => prev.filter((x) => x !== '无').includes(c)
+      ? prev.filter((x) => x !== c)
+      : [...prev.filter((x) => x !== '无'), c])
+  }
+
+  return (
+    <div className="quick-questions">
+      <section className="mission">
+        <p className="label">三个快问 · 可跳过</p>
+        <h1>让计划更贴近你</h1>
+      </section>
+
+      <section>
+        <p className="label">主要目标</p>
+        <div className="chips">
+          {GOAL_OPTIONS.map((g) => (
+            <button
+              key={g}
+              type="button"
+              className={goal === g ? 'chip selected' : 'chip'}
+              aria-pressed={goal === g}
+              onClick={() => setGoal(goal === g ? undefined : g)}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <p className="label">每周想练几次</p>
+        <div className="chips">
+          {WEEKLY_OPTIONS.map((n) => (
+            <button
+              key={n}
+              type="button"
+              className={weeklyTarget === n ? 'chip selected' : 'chip'}
+              aria-pressed={weeklyTarget === n}
+              onClick={() => setWeeklyTarget(weeklyTarget === n ? undefined : n)}
+            >
+              {n} 次
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <p className="label">有需要注意的部位吗</p>
+        <div className="chips">
+          {CAUTION_OPTIONS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={cautionAreas.includes(c) ? 'chip selected' : 'chip'}
+              aria-pressed={cautionAreas.includes(c)}
+              onClick={() => toggleCaution(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="entry-actions">
+        <button
+          type="button"
+          className="primary"
+          onClick={() =>
+            onSubmit({
+              goal,
+              weeklyTarget,
+              cautionAreas: cautionAreas.filter((c) => c !== '无'),
+            })
+          }
+        >
+          看完整计划
+        </button>
+        <button type="button" className="ghost" onClick={onBack}>返回换路径</button>
+      </section>
+    </div>
+  )
+}
+
+/** 入口第三步：给未创建的计划做一个轻量预览（不落库，点确认才创建） */
 function templatePreview(t: ProgramTemplate): { title: string; intent: string } {
   const byPath: Record<ProgramTemplate['path'], { title: string; intent: string }> = {
     returning: { title: '重新建立训练节奏', intent: '中断后重新开始，恢复规律训练' },
@@ -258,9 +395,9 @@ function JourneyPreviewSection({ template }: { template: ProgramTemplate }) {
       </ul>
       <p className="label" style={{ marginTop: 14 }}>如何变化</p>
       <ul className="rules">
-        <li>同 RPE 档下完成目标区间上限 → 下次候选 +2.5kg——不自动生效，由你确认。</li>
+        <li>同 RPE 档下完成目标区间上限 → 下次候选 +2.5kg，由你确认后生效。</li>
       </ul>
-      <p className="body">完整版 / 短版 / 恢复版每天按状态与时间选择，三者都是主路。开始后可在「旅程」随时查看全部细节。</p>
+      <p className="body">三个版本都在主路上，按状态与时间选。</p>
     </section>
   )
 }

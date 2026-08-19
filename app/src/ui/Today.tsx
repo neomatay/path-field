@@ -1,5 +1,5 @@
 /**
- * 今天页：10 秒状态检查 -> 完整/短版/恢复版选择（带理由）-> 开始训练。
+ * 今天页：10 秒状态检查（时间 / 精力 / 睡眠 / 不适）-> 完整/短版/恢复版选择 -> 开始训练。
  * 依据契约 6 节：推荐区显示 ruleId 的用户可读理由、至少一个替代选项；
  * urgent 的状态不得显示开始完整训练。
  */
@@ -21,6 +21,12 @@ const DISCOMFORT_OPTIONS: Array<{ value: DiscomfortLevel; label: string }> = [
   { value: 'noticeable', label: '明显不适' },
   { value: 'urgentSignal', label: '红旗信号' },
 ]
+const SLEEP_OPTIONS: Array<{ value: 'lt6' | '6-7' | '7-8' | 'gt8'; label: string; hours: number }> = [
+  { value: 'lt6', label: '< 6 小时', hours: 5 },
+  { value: '6-7', label: '6-7 小时', hours: 6.5 },
+  { value: '7-8', label: '7-8 小时', hours: 7.5 },
+  { value: 'gt8', label: '8 小时+', hours: 8.5 },
+]
 
 const VARIANT_LABEL: Record<VariantKind, string> = {
   full: '完整版',
@@ -31,13 +37,17 @@ const VARIANT_LABEL: Record<VariantKind, string> = {
 interface Props {
   program: Program
   nextPlannedSessionId?: string
+  /** 本周还没记录体重时显示一行轻提示 */
+  showBodyPrompt?: boolean
+  onGoRecords?: () => void
   onStartTraining: (session: Session) => void
 }
 
-export function Today({ program, nextPlannedSessionId, onStartTraining }: Props) {
+export function Today({ program, nextPlannedSessionId, showBodyPrompt, onGoRecords, onStartTraining }: Props) {
   const [availableMinutes, setMinutes] = useState<number | null>(null)
   const [readiness, setReadiness] = useState<CurrentState['readiness'] | null>(null)
   const [discomfort, setDiscomfort] = useState<DiscomfortLevel | null>(null)
+  const [sleepBand, setSleepBand] = useState<'lt6' | '6-7' | '7-8' | 'gt8' | null>(null)
   const [chosen, setChosen] = useState<VariantKind | null>(null)
 
   const safety = useMemo(
@@ -57,8 +67,9 @@ export function Today({ program, nextPlannedSessionId, onStartTraining }: Props)
             availableMinutes,
             fullVariantMinutes: program.variants.full.estimatedMinutes,
             readiness,
+            sleepBand: sleepBand ?? undefined,
           }),
-    [safety, availableMinutes, readiness, program],
+    [safety, availableMinutes, readiness, sleepBand, program],
   )
 
   const planned =
@@ -85,6 +96,11 @@ export function Today({ program, nextPlannedSessionId, onStartTraining }: Props)
         chosen !== null && chosen !== variant?.recommended
           ? [{ type: 'variantChange', reason: undefined, source: 'user' }]
           : [],
+      checkIn: {
+        sleepHours: sleepBand === null ? undefined : SLEEP_OPTIONS.find((o) => o.value === sleepBand)?.hours,
+        readiness: readiness ?? undefined,
+        availableMinutes: availableMinutes ?? undefined,
+      },
       checkOut: { discomfort: 'unknown' },
       safetyEvents: safety !== null && safety.riskLevel !== 'none' ? [safety.safetyCheck.ruleId] : [],
     })
@@ -94,7 +110,6 @@ export function Today({ program, nextPlannedSessionId, onStartTraining }: Props)
     <div className="today">
       <section>
         <p className="label">今天的训练 · {planned?.title ?? '计划训练'}</p>
-        <p className="body">{planned?.intent ?? ''}</p>
       </section>
 
       {/* 10 秒状态检查 */}
@@ -153,6 +168,30 @@ export function Today({ program, nextPlannedSessionId, onStartTraining }: Props)
           </p>
         )}
       </section>
+
+      <section>
+        <p className="label">昨晚睡了多久</p>
+        <div className="chips">
+          {SLEEP_OPTIONS.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              className={sleepBand === o.value ? 'chip selected' : 'chip'}
+              aria-pressed={sleepBand === o.value}
+              onClick={() => setSleepBand(sleepBand === o.value ? null : o.value)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {showBodyPrompt === true && onGoRecords !== undefined && (
+        <p className="body body-prompt">
+          本周还没记体重。
+          <button type="button" className="ghost small" onClick={onGoRecords}>去记一笔</button>
+        </p>
+      )}
 
       {/* 版本选择（检查完成后出现） */}
       {checkDone && variant !== null && (

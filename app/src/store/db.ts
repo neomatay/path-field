@@ -5,6 +5,7 @@
  */
 import { openDB, type IDBPDatabase } from 'idb';
 import type {
+  BodyMetric,
   CurrentState,
   Decision,
   Evidence,
@@ -16,7 +17,7 @@ import type {
 } from '../core/types';
 
 const DB_NAME = 'path-field';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 /** 对象仓与主键；所有记录以 id 为主键，索引按查询需要补 */
 export const STORES = [
@@ -28,13 +29,14 @@ export const STORES = [
   'evidence',
   'reviews',
   'decisions',
+  'bodyMetrics',
 ] as const;
 
 export type StoreName = (typeof STORES)[number];
 
 export interface PathFieldSnapshot {
   exportedAt: string;
-  version: 1;
+  version: 2;
   safetyChecks: SafetyCheck[];
   currentStates: CurrentState[];
   missions: Mission[];
@@ -43,6 +45,7 @@ export interface PathFieldSnapshot {
   evidence: Evidence[];
   reviews: Review[];
   decisions: Decision[];
+  bodyMetrics: BodyMetric[];
 }
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
@@ -86,11 +89,11 @@ export async function remove(store: StoreName, id: string): Promise<void> {
 // ---------- 导出 / 导入 ----------
 
 export async function exportSnapshot(): Promise<PathFieldSnapshot> {
-  const [safetyChecks, currentStates, missions, programs, sessions, evidence, reviews, decisions] =
+  const [safetyChecks, currentStates, missions, programs, sessions, evidence, reviews, decisions, bodyMetrics] =
     await Promise.all(STORES.map((s) => getAll(s)));
   return {
     exportedAt: new Date().toISOString(),
-    version: 1,
+    version: 2,
     safetyChecks: safetyChecks as SafetyCheck[],
     currentStates: currentStates as CurrentState[],
     missions: missions as Mission[],
@@ -99,6 +102,7 @@ export async function exportSnapshot(): Promise<PathFieldSnapshot> {
     evidence: evidence as Evidence[],
     reviews: reviews as Review[],
     decisions: decisions as Decision[],
+    bodyMetrics: bodyMetrics as BodyMetric[],
   };
 }
 
@@ -112,9 +116,12 @@ export function downloadSnapshot(snapshot: PathFieldSnapshot): void {
   URL.revokeObjectURL(url);
 }
 
-/** 导入为合并写入（同 id 覆盖）；不删除本地已有数据 */
+/** 导入为合并写入（同 id 覆盖）；不删除本地已有数据。兼容 v1 导出（无 bodyMetrics 字段）。 */
 export async function importSnapshot(snapshot: PathFieldSnapshot): Promise<void> {
-  if (snapshot.version !== 1) throw new Error(`不支持的导出版本：${snapshot.version}`);
+  const version = snapshot.version as number
+  if (version !== 1 && version !== 2) {
+    throw new Error(`不支持的导出版本：${version}`);
+  }
   const db = await getDB();
   const tx = db.transaction(STORES as unknown as string[], 'readwrite');
   for (const store of STORES) {

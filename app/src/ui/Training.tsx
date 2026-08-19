@@ -110,18 +110,13 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
           {isRecovery ? '恢复活动' : session.selectedVariant === 'short' ? '短版训练' : '完整训练'}
         </p>
         <p className="body">
-          {isRecovery
-            ? '低压力活动与状态记录。完成或提前退出都是有效记录。'
-            : '记录实际发生的组数与重量；替换、跳过、不适都是计划内的选择。'}
+          {isRecovery ? '低压力活动，随时可结束。' : '记下实际组数与重量，替换和跳过都行。'}
         </p>
       </header>
 
       {isRecovery ? (
         <section className="recovery-note">
-          <p className="body">
-            恢复版不做负荷训练。你可以做泡沫轴放松、拉伸或散步，结束时在下面标记今天的状态即可。
-            恢复活动不能说明训练能力，也不替代专业评估。
-          </p>
+          <p className="body">做点拉伸、泡沫轴或散步都可以。结束时标记一下状态。</p>
         </section>
       ) : (
         blocks.map((block, bi) => {
@@ -142,7 +137,7 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
                 <p className="last-ref">
                   上次：{last.weightKg !== undefined ? `${last.weightKg}kg x ${last.reps ?? '?'}` : `${last.reps ?? '?'} 次`}
                   {last.rpe !== undefined ? ` @RPE${last.rpe}` : ''}
-                  （{new Date(last.date).toLocaleDateString('zh-CN')}）——仅作参照，不是今天的目标。
+                  （{new Date(last.date).toLocaleDateString('zh-CN')}）
                 </p>
               ) : (
                 ex?.startingHint && <p className="last-ref">{ex.startingHint}</p>
@@ -150,7 +145,7 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
 
               {block.skipped ? (
                 <p className="meta">
-                  已跳过（{block.skipReason}）。训练意图保留，本次不记录。
+                  已跳过。
                   <button type="button" className="ghost small" onClick={() => setBlocks((prev) => prev.map((b, i) => (i !== bi ? b : { ...b, skipped: false, skipReason: undefined })))}>
                     恢复记录
                   </button>
@@ -186,7 +181,7 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
                   </div>
 
                   <div className="subs">
-                    <p className="meta">替换为（点击立即切换，训练意图不变）：</p>
+                    <p className="meta">替换为：</p>
                     <div className="chips">
                       {originalId !== undefined && (
                         <button type="button" className="chip" onClick={() => substitute(bi, originalId)}>

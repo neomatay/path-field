@@ -15,6 +15,8 @@ export interface VariantRuleInput {
   availableMinutes: number;
   fullVariantMinutes: number;
   readiness: 'low' | 'ok' | 'good' | 'unknown';
+  /** 昨晚睡眠档位；<6 视为恢复不足，影响推荐 */
+  sleepBand?: 'lt6' | '6-7' | '7-8' | 'gt8';
   /** 用户是否已主动选择了某个版本（VARIANT-USER-04） */
   userOverride?: { kind: VariantKind; reason?: string };
 }
@@ -56,26 +58,30 @@ export function evaluateVariant(input: VariantRuleInput): VariantRuleResult {
       recommended: 'recovery',
       reason:
         input.riskLevel === 'caution'
-          ? '已记录影响训练的不适，建议低压力恢复活动或直接休息；恢复活动不能替代专业评估。'
+          ? '今天有不适记录。建议恢复活动或直接休息。'
           : input.availableMinutes < 20
-            ? `今天可用 ${input.availableMinutes} 分钟，不足 20 分钟。建议恢复活动、轻度活动记录，或直接休息——这也是计划内的选择。`
-            : '你自评精力有限。建议恢复版：保留状态记录，去掉负荷训练。',
+            ? `今天只有 ${input.availableMinutes} 分钟。恢复活动或休息都在计划内。`
+            : '精力有限。建议恢复版：只记录状态，不做负荷。',
       selectable: ['recovery', 'short'],
-      unknowns: ['今天的恢复活动不能说明训练能力'],
+      unknowns: [],
     };
   }
 
   // VARIANT-SHORT-02
   if (
     input.availableMinutes < input.fullVariantMinutes * 0.8 ||
-    input.readiness === 'unknown'
+    input.readiness === 'unknown' ||
+    input.sleepBand === 'lt6'
   ) {
     return {
       ruleId: 'VARIANT-SHORT-02',
       recommended: 'short',
-      reason: `计划完整版约 ${input.fullVariantMinutes} 分钟，今天可用 ${input.availableMinutes} 分钟。建议短版：保留 Mission 关键动作和记录点，移除非关键容量。`,
+      reason:
+        input.sleepBand === 'lt6'
+          ? '昨晚睡眠不足 6 小时。建议短版：保留关键动作，今天不追容量。'
+          : `完整版约 ${input.fullVariantMinutes} 分钟，今天可用 ${input.availableMinutes} 分钟。建议短版：保留关键动作，去掉非关键容量。`,
       selectable: ['short', 'recovery'],
-      unknowns: ['短版完成度如何影响本周证据，将在周复盘说明'],
+      unknowns: [],
     };
   }
 
@@ -83,7 +89,7 @@ export function evaluateVariant(input: VariantRuleInput): VariantRuleResult {
   return {
     ruleId: 'VARIANT-FULL-01',
     recommended: 'full',
-    reason: `今天可用 ${input.availableMinutes} 分钟，达到完整版所需，且自评状态可训练。建议完整版；短版和恢复版仍可选。`,
+    reason: '时间和状态都够。建议完整版，短版 / 恢复版仍可选。',
     selectable: ['full', 'short', 'recovery'],
     unknowns: [],
   };

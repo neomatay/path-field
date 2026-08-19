@@ -1,16 +1,18 @@
 /**
- * 旅程页：完整计划总览 —— Mission、每周节奏、每节课的意图与动作、
- * 完整/短版/恢复版各自保留什么、进阶候选与安全边界。
+ * 旅程页：路线地图 + 周连击 + 成就印章 + 计划总览。
  * 顶部是地图日记：路线随真实打卡点亮，里程碑是营地印章。
  */
-import type { Mission, Program } from '../core/types'
+import type { Mission, Program, Session } from '../core/types'
 import { EXERCISES_BY_ID } from '../data/exercises'
+import { ACHIEVEMENTS, achievementsOf, weekStreak } from '../core/stats'
 import { ParkArt } from './ParkArt'
 
 interface Props {
   mission: Mission
   program: Program
-  /** 已记录的训练次数（含短版/恢复版——三个版本都是主路） */
+  sessions: Session[]
+  programs: Program[]
+  /** 当前计划内已记录的训练次数（三个版本都算点亮） */
   sessionsDone: number
 }
 
@@ -21,15 +23,18 @@ const CAMPS = [4 / MISSION_TARGET, 1]
 
 const VARIANT_INFO = [
   { kind: 'full' as const, label: '完整版', desc: '时间与状态都匹配时的完整训练。' },
-  { kind: 'short' as const, label: '短版', desc: '时间不足时的主路：保留 Mission 关键动作与记录点，移除非关键容量。不是失败版。' },
-  { kind: 'recovery' as const, label: '恢复版', desc: '不适、很疲劳或时间极少时的低压力选择：只做状态记录与轻度活动，可随时退出。' },
+  { kind: 'short' as const, label: '短版', desc: '保留关键动作与记录点。也是主路，不是失败版。' },
+  { kind: 'recovery' as const, label: '恢复版', desc: '低压力选择：状态记录与轻度活动。' },
 ]
 
-export function Journey({ mission, program, sessionsDone }: Props) {
+export function Journey({ mission, program, sessions, programs, sessionsDone }: Props) {
   const reviewDate = new Date(mission.reviewDate).toLocaleDateString('zh-CN')
   const progress = Math.min(1, sessionsDone / MISSION_TARGET)
   const nextCampAt = CAMPS.find((c) => c > progress)
   const toNextCamp = nextCampAt === undefined ? 0 : Math.ceil(nextCampAt * MISSION_TARGET) - sessionsDone
+
+  const streak = weekStreak(sessions, program.weeklyRhythm.minViablePerWeek)
+  const earned = new Set(achievementsOf(sessions, programs))
 
   return (
     <div className="journey">
@@ -42,17 +47,43 @@ export function Journey({ mission, program, sessionsDone }: Props) {
         />
         <p className="body route-status">
           {sessionsDone === 0
-            ? '路线已经画好，等你走出第一段。任何版本（完整/短版/恢复）都算点亮。'
+            ? '路线已画好，走出第一段就算点亮（三个版本都算）。'
             : nextCampAt === undefined
-              ? '这段路线已经走完。复盘之后，下一段路线等你决定。'
-              : `再记录 ${toNextCamp} 次到达下一个营地。中断不清零，路线不会消失。`}
+              ? '这段路线走完了。复盘之后，下一段等你决定。'
+              : `再记录 ${toNextCamp} 次到下一个营地。`}
         </p>
+      </section>
+
+      <section className="streak-row">
+        <div className="stat">
+          <span className="stat-value">{streak.current}</span>
+          <span className="stat-label">周连击</span>
+        </div>
+        <div className="stat">
+          <span className="stat-value">{streak.best}</span>
+          <span className="stat-label">最佳</span>
+        </div>
+        <p className="body">
+          每周完成 {program.weeklyRhythm.minViablePerWeek} 次即达标。断了随时重新出发，什么都不清零。
+        </p>
+      </section>
+
+      <section>
+        <p className="label">成就印章</p>
+        <div className="stamp-strip">
+          {ACHIEVEMENTS.map((a) => (
+            <div key={a.id} className={earned.has(a.id) ? 'stamp earned' : 'stamp'}>
+              <span className="stamp-name">{a.name}</span>
+              <span className="stamp-hint">{a.hint}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="mission-stamp">
         <p className="label">当前 Mission · {reviewDate} 复盘</p>
         <h1>{mission.title}</h1>
-        <p className="body">你的原话：{mission.userIntent}</p>
+        {mission.goal !== undefined && <p className="body">目标：{mission.goal}</p>}
         <div className="stamp-rows">
           <div>
             <p className="label">成功证据</p>
@@ -62,7 +93,7 @@ export function Journey({ mission, program, sessionsDone }: Props) {
                   <span className={e.classification === 'fact' ? 'tag fact' : 'tag obs'}>
                     {e.classification === 'fact' ? '事实' : '观察'}
                   </span>
-                  {e.statement}（{e.frequency}）
+                  {e.statement}
                 </li>
               ))}
             </ul>
@@ -72,13 +103,16 @@ export function Journey({ mission, program, sessionsDone }: Props) {
             <p className="body">{mission.notTheJudge.join('、')}</p>
           </div>
         </div>
+        {mission.cautionAreas !== undefined && mission.cautionAreas.length > 0 && (
+          <p className="body">注意部位：{mission.cautionAreas.join('、')}</p>
+        )}
       </section>
 
       <section>
         <p className="label">每周节奏</p>
         <p className="body">
           建议每周 {program.weeklyRhythm.recommendedPerWeek} 次，最少 {program.weeklyRhythm.minViablePerWeek} 次。
-          少于建议不是失败；中断不清零、不补债。
+          {mission.weeklyTarget !== undefined && `你说想练 ${mission.weeklyTarget} 次。`}
         </p>
       </section>
 
@@ -107,7 +141,7 @@ export function Journey({ mission, program, sessionsDone }: Props) {
         {VARIANT_INFO.map((v) => (
           <div key={v.kind} className="variant-info">
             <p className="variant-name">{v.label} · 约 {program.variants[v.kind].estimatedMinutes} 分钟</p>
-            <p className="body">{v.kind === 'full' ? v.desc : program.variants[v.kind].keeps + '。' + v.desc}</p>
+            <p className="body">{v.desc}</p>
           </div>
         ))}
       </section>
@@ -116,7 +150,7 @@ export function Journey({ mission, program, sessionsDone }: Props) {
         <p className="label">计划如何变化</p>
         <ul className="plain-list">
           {program.progressionRules.map((r, i) => (
-            <li key={i}>{r}——不自动生效，由你确认。</li>
+            <li key={i}>{r}</li>
           ))}
           {program.safetyConstraints.map((r, i) => (
             <li key={`s${i}`}>{r}</li>
