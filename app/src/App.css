@@ -266,8 +266,8 @@
 
 .safety {
   padding: 10px 12px;
-  border-top: 3px solid #be6038;
-  border-radius: 0 0 8px 8px;
+  border: 1px solid rgba(190, 96, 56, 0.45);
+  border-radius: 8px;
   background: rgba(190, 96, 56, 0.08);
   font-size: 14px;
 }
@@ -325,15 +325,25 @@
 .parq-note {
   margin: 10px 0 0;
   padding: 10px 12px;
-  border-left: 3px solid var(--sun);
+  border: 1px solid rgba(236, 169, 61, 0.55);
   background: rgba(236, 169, 61, 0.1);
-  border-radius: 0 8px 8px 0;
+  border-radius: 8px;
   font-size: 13.5px;
   line-height: 1.6;
 }
 
+/* 落款标记：sun 色菱形，呼应证据几何系统（diamond=待确认） */
+.parq-note::before {
+  content: '◆';
+  display: inline-block;
+  margin-right: 7px;
+  font-size: 10px;
+  vertical-align: 1px;
+  color: var(--sun);
+}
+
 .safety.urgent {
-  border-top-color: #be6038;
+  border-color: #be6038;
   background: rgba(190, 96, 56, 0.16);
   font-weight: 600;
 }
