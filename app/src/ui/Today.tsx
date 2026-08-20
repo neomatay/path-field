@@ -9,6 +9,7 @@ import { discomfortToSafetyInput, evaluateSafety } from '../core/rules/safety'
 import { evaluateVariant } from '../core/rules/variant'
 import { uid } from '../store/usePath'
 import { EXERCISES_BY_ID } from '../data/exercises'
+import { PlayIcon } from './icons'
 
 const MINUTE_OPTIONS = [15, 25, 40, 60]
 const READINESS_OPTIONS: Array<{ value: CurrentState['readiness']; label: string }> = [
@@ -32,6 +33,15 @@ const VARIANT_LABEL: Record<VariantKind, string> = {
   full: '完整版',
   short: '短版',
   recovery: '恢复版',
+}
+
+/** 页头日期标签：8月20日 · 周三 */
+function todayLabel(): string {
+  return new Date().toLocaleDateString('zh-CN', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  })
 }
 
 interface Props {
@@ -112,11 +122,15 @@ export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, 
 
   return (
     <div className="today">
-      <section>
-        <p className="label">今天的训练 · {planned?.title ?? '计划训练'}</p>
-      </section>
+      <header className="page-head">
+        <p className="label">{todayLabel()}</p>
+        <h1 className="page-title">{planned?.title ?? '计划训练'}</h1>
+      </header>
 
       <button type="button" className="hero-cta" onClick={start}>
+        <span className="cta-icon">
+          <PlayIcon size={20} />
+        </span>
         <span className="cta-title">
           {selectedVariant === 'recovery' ? '开始恢复活动' : '开始训练'}
         </span>

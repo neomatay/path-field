@@ -19,7 +19,8 @@
   background: var(--paper);
   color: var(--ink);
   font: 16px/1.6 -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
-  padding: 25px 27px 20px;
+  /* 底部留出浮动 tab bar + 安全区的高度 */
+  padding: 0 27px calc(112px + env(safe-area-inset-bottom, 0px));
   max-width: 480px;
   margin: 0 auto;
   position: relative;
@@ -34,13 +35,21 @@
   pointer-events: none;
 }
 
+/* 顶栏：吸顶 + 纸面磨砂，滚动时内容从它下面穿过 */
 .topline {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid rgba(28, 42, 35, 0.55);
   box-shadow: 0 4px 0 -3px rgba(28, 42, 35, 0.55);
-  padding-bottom: 10px;
+  padding: 25px 27px 10px;
+  margin: 0 -27px;
+  background: rgba(241, 226, 184, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .label {
@@ -479,32 +488,67 @@
   padding-top: 11px;
 }
 
-/* ---------- 底部导航 ---------- */
+/* ---------- 底部导航：浮动胶囊 tab bar（图标 + 文字） ---------- */
 
 .tabs {
+  position: fixed;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 420px;
   display: flex;
-  border-top: 1px solid rgba(28, 42, 35, 0.55);
-  margin-top: 8px;
+  gap: 4px;
+  background: rgba(241, 226, 184, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(28, 42, 35, 0.5);
+  border-radius: 18px;
+  box-shadow: 0 10px 26px rgba(28, 42, 35, 0.28);
+  padding: 6px;
+  z-index: 40;
 }
 
 .tab {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   background: transparent;
   border: none;
-  padding: 13px 0 11px;
-  font-family: var(--display);
-  font-size: 15px;
-  font-weight: 760;
-  letter-spacing: 0.08em;
+  border-radius: 13px;
+  padding: 7px 0 6px;
   color: var(--ink);
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
+  transition: opacity 0.15s, background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.tab svg {
+  display: block;
+}
+
+.tab .tab-label {
+  font-family: var(--display);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.tab:hover {
+  opacity: 0.8;
+}
+
+.tab:active {
+  transform: scale(0.93);
 }
 
 .tab.selected {
   opacity: 1;
-  border-bottom-color: var(--forest);
+  color: var(--forest);
+  background: rgba(32, 90, 62, 0.14);
 }
 
 /* ---------- 路线主视觉（地图日记） ---------- */
@@ -1086,7 +1130,7 @@
 .stat-line .stat-line-value {
   font-family: var(--display);
   font-weight: 900;
-  font-size: 22px;
+  font-size: 26px;
   line-height: 1;
 }
 
@@ -1154,6 +1198,65 @@
   flex-direction: column;
   gap: 14px;
   padding: 2px 0 14px;
+}
+
+/* 主 tab 页切换：内容淡入上移，点了立刻有反馈 */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.today,
+.journey,
+.records {
+  animation: page-in 0.28s ease both;
+}
+
+/* 页头：小标签 + 展示体大标题，让每个主页面有自己的名字 */
+.page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.page-head .label {
+  opacity: 0.72;
+}
+
+.page-title {
+  font-family: var(--display);
+  font-size: clamp(27px, 8vw, 36px);
+  font-weight: 900;
+  line-height: 1.04;
+  margin: 0;
+}
+
+/* 主按钮里的播放徽章：圆环 + 三角，纸面色 */
+.hero-cta .cta-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 226, 184, 0.45);
+  background: rgba(241, 226, 184, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--paper);
+  margin-bottom: 4px;
+}
+
+/* 记录页 sub-tab 面板：容器 + 切换时的轻动画 */
+.tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: page-in 0.22s ease both;
 }
 
 /* 记录页 sub-tabs：分段控件（segmented control） */

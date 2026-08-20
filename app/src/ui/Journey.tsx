@@ -31,6 +31,11 @@ export function Journey({ mission, program, sessions, programs, sessionsDone }: 
 
   return (
     <div className="journey">
+      <header className="page-head">
+        <p className="label">MISSION · {mission.title}</p>
+        <h1 className="page-title">旅程</h1>
+      </header>
+
       <section className="route-hero">
         <ParkArt
           lit={progress}

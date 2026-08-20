@@ -77,10 +77,11 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
   if (sessions.length === 0 && bodyMetrics.length === 0) {
     return (
       <div className="records">
-        <section className="mission">
-          <p className="label">记录</p>
-          <h1>还没有记录</h1>
-        </section>
+        <header className="page-head">
+          <p className="label">RECORDS</p>
+          <h1 className="page-title">记录</h1>
+        </header>
+        <p className="body">还没有记录。完成第一次训练后，这里就是你的事实清单。</p>
       </div>
     )
   }
@@ -89,6 +90,11 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
 
   return (
     <div className="records">
+      <header className="page-head">
+        <p className="label">RECORDS</p>
+        <h1 className="page-title">记录</h1>
+      </header>
+
       <section className="stat-line">
         <span className="stat-line-item">
           <span className="stat-line-value">{sorted.length}</span>

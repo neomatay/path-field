@@ -10,6 +10,7 @@ import { Training } from './ui/Training'
 import { Receipt } from './ui/Receipt'
 import { Journey } from './ui/Journey'
 import { Records } from './ui/Records'
+import { ChartIcon, PeaksIcon, SunIcon } from './ui/icons'
 
 type Screen = 'today' | 'journey' | 'records' | 'training' | 'receipt'
 
@@ -22,6 +23,13 @@ const TEMPLATE_LABEL: Record<ProgramTemplate['path'], string> = {
 const GOAL_OPTIONS = ['减脂', '增肌', '塑形', '体能', '更健康的感觉']
 const WEEKLY_OPTIONS = [1, 2, 3]
 const CAUTION_OPTIONS = ['无', '膝', '腰', '肩', '其他']
+
+/** 底部导航：图标 + 文字，对应 app 的三个核心功能区 */
+const TABS = [
+  { key: 'today', label: '今天', Icon: SunIcon },
+  { key: 'journey', label: '旅程', Icon: PeaksIcon },
+  { key: 'records', label: '记录', Icon: ChartIcon },
+] as const
 
 function App() {
   const {
@@ -217,15 +225,17 @@ function App() {
       </main>
 
       {!inFocus && (
-        <nav className="tabs">
-          {(['today', 'journey', 'records'] as const).map((tab) => (
+        <nav className="tabs" aria-label="主导航">
+          {TABS.map(({ key, label, Icon }) => (
             <button
-              key={tab}
+              key={key}
               type="button"
-              className={screen === tab ? 'tab selected' : 'tab'}
-              onClick={() => setScreen(tab)}
+              className={screen === key ? 'tab selected' : 'tab'}
+              aria-current={screen === key ? 'page' : undefined}
+              onClick={() => setScreen(key)}
             >
-              {tab === 'today' ? '今天' : tab === 'journey' ? '旅程' : '记录'}
+              <Icon size={24} />
+              <span className="tab-label">{label}</span>
             </button>
           ))}
         </nav>
