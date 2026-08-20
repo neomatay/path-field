@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { downloadSnapshot, exportSnapshot } from './store/db'
 import { usePath, type OnboardingAnswers } from './store/usePath'
@@ -13,6 +13,12 @@ import { Records } from './ui/Records'
 import { ChartIcon, PeaksIcon, SunIcon } from './ui/icons'
 
 type Screen = 'today' | 'journey' | 'records' | 'training' | 'receipt'
+
+/** 主 tab 走 hash 路由（#/today · #/journey · #/records）：可后退、可分享、重开回到原页 */
+function screenFromHash(): Screen {
+  const h = window.location.hash.replace(/^#\/?/, '')
+  return h === 'journey' || h === 'records' ? h : 'today'
+}
 
 const TEMPLATE_LABEL: Record<ProgramTemplate['path'], string> = {
   returning: '我中断了一段时间，想重新开始',
@@ -37,7 +43,22 @@ function App() {
     programSessions, missions, bodyMetrics, templateChoices, startWithTemplate,
     archiveActivePlan, saveSession, saveBodyMetric,
   } = usePath()
-  const [screen, setScreen] = useState<Screen>('today')
+  const [screen, setScreenState] = useState<Screen>(screenFromHash)
+
+  // 浏览器后退 / 前进时跟随 hash
+  useEffect(() => {
+    const onHash = () => setScreenState(screenFromHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  /** 切页：主 tab 同步写 hash（产生历史记录，可后退）；训练 / 收据是临时流程，不进历史 */
+  const setScreen = (s: Screen) => {
+    setScreenState(s)
+    if (s === 'today' || s === 'journey' || s === 'records') {
+      window.location.hash = `#/${s}`
+    }
+  }
   const [draft, setDraft] = useState<Session | null>(null)
   const [pendingTemplate, setPendingTemplate] = useState<ProgramTemplate | null>(null)
   const [pendingAnswers, setPendingAnswers] = useState<OnboardingAnswers | null>(null)

@@ -1218,11 +1218,41 @@
   animation: page-in 0.28s ease both;
 }
 
+/* 键盘可达性：Tab 聚焦出现墨绿焦点环（鼠标点击不出现），深底按钮用日晒黄 */
+.app :where(button, input, summary):focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+
+.app .hero-cta:focus-visible {
+  outline-color: var(--sun);
+}
+
+.app .tab:focus-visible {
+  outline-offset: -3px;
+}
+
+/* 今天页的两列容器（移动端纵向堆叠，桌面双栏） */
+.today-main,
+.today-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 /* 页头：小标签 + 展示体大标题，让每个主页面有自己的名字 */
 .page-head {
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+/* 页头标题行：大标题 + 右侧操作（导出海报） */
+.page-head-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .page-head .label {
@@ -1291,4 +1321,245 @@
   color: var(--ink);
   opacity: 1;
   box-shadow: 0 1px 3px rgba(28, 42, 35, 0.28);
+}
+
+/* ---------- 打印海报落款（仅打印时显示） ---------- */
+
+.print-foot {
+  display: none;
+}
+
+/* ---------- 桌面（≥768px）：海报挂在深色展墙上 ---------- */
+
+@media (min-width: 768px) {
+  html {
+    background: #17221b;
+  }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(circle at 18% -4%, rgba(32, 90, 62, 0.3), transparent 44rem),
+      radial-gradient(circle at 88% 100%, rgba(236, 169, 61, 0.06), transparent 40rem),
+      #17221b;
+  }
+
+  /* 纸面本身变成一张挂在展墙上的海报 */
+  .app {
+    max-width: 780px;
+    margin: 28px auto;
+    min-height: calc(100vh - 56px);
+    padding: 0 44px calc(128px + env(safe-area-inset-bottom, 0px));
+    border-radius: 6px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+  }
+
+  .topline {
+    margin: 0 -44px;
+    padding: 30px 44px 12px;
+    border-radius: 5px 5px 0 0;
+  }
+
+  .stage {
+    gap: 28px;
+    padding: 28px 0;
+  }
+
+  /* 今天页：左主按钮，右数字条与折叠微调 */
+  .today {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-areas:
+      'head head'
+      'main side';
+    column-gap: 44px;
+    align-items: start;
+  }
+
+  .today > .page-head {
+    grid-area: head;
+  }
+
+  .today-main {
+    grid-area: main;
+    position: sticky;
+    top: 84px;
+  }
+
+  .today-side {
+    grid-area: side;
+  }
+
+  .hero-cta {
+    padding: 44px 24px;
+    border-radius: 16px;
+  }
+
+  .hero-cta .cta-title {
+    font-size: 38px;
+  }
+
+  .hero-cta .cta-icon {
+    width: 54px;
+    height: 54px;
+  }
+
+  /* 旅程页：地图占左列跨两行，数字与印章进右列 */
+  .journey {
+    display: grid;
+    grid-template-columns: 1.25fr 0.75fr;
+    column-gap: 40px;
+    row-gap: 22px;
+  }
+
+  .journey > .page-head,
+  .journey > .fold,
+  .journey > .print-foot {
+    grid-column: 1 / -1;
+  }
+
+  .journey > .route-hero {
+    grid-row: span 2;
+  }
+
+  .park-art {
+    height: 372px;
+  }
+
+  /* 记录页：统计与 sub-tab 通栏，记录卡片双列 */
+  .records {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 22px;
+    row-gap: 18px;
+    align-items: start;
+  }
+
+  .records > .page-head,
+  .records > .stat-line,
+  .records > .subtabs,
+  .records > .tab-panel,
+  .records > .body {
+    grid-column: 1 / -1;
+  }
+
+  .record-card {
+    margin: 0;
+  }
+}
+
+/* ---------- 打印：旅程页即一张国家公园海报 ---------- */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+
+  .app {
+    max-width: none;
+    margin: 0;
+    min-height: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--paper);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* 印刷内框贴满纸边，成为海报边框 */
+  .app::after {
+    inset: 0;
+  }
+
+  /* 屏幕上的 chrome 全部退场 */
+  .topline,
+  .tabs,
+  .footnote,
+  .print-btn {
+    display: none !important;
+  }
+
+  .stage {
+    padding: 0;
+    gap: 16px;
+  }
+
+  .today,
+  .journey,
+  .records {
+    animation: none;
+  }
+
+  /* 旅程海报排版：大标题、大地图、大数字、印章带、落款 */
+  .journey {
+    display: flex;
+    gap: 18px;
+  }
+
+  .journey .fold {
+    display: none;
+  }
+
+  .journey .page-title {
+    font-size: 54px;
+  }
+
+  .journey .page-head .label {
+    font-size: 13px;
+  }
+
+  .park-art {
+    height: 138mm;
+    border-radius: 8px;
+  }
+
+  .park-art figcaption {
+    font-size: 12px;
+  }
+
+  .stat-line {
+    gap: 26px;
+  }
+
+  .stat-line .stat-line-value {
+    font-size: 36px;
+  }
+
+  .stat-line .stat-line-label {
+    font-size: 13px;
+  }
+
+  .stamp-strip {
+    gap: 8px;
+  }
+
+  .stamp {
+    padding: 10px 12px;
+  }
+
+  .stamp .stamp-name,
+  .stamp .stamp-hint {
+    font-size: 12px;
+  }
+
+  .print-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    border-top: 1.5px solid rgba(28, 42, 35, 0.6);
+    padding-top: 7px;
+    margin-top: auto;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 }

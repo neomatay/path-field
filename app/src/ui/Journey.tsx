@@ -33,7 +33,12 @@ export function Journey({ mission, program, sessions, programs, sessionsDone }: 
     <div className="journey">
       <header className="page-head">
         <p className="label">MISSION · {mission.title}</p>
-        <h1 className="page-title">旅程</h1>
+        <div className="page-head-row">
+          <h1 className="page-title">旅程</h1>
+          <button type="button" className="ghost small print-btn" onClick={() => window.print()}>
+            导出海报
+          </button>
+        </div>
       </header>
 
       <section className="route-hero">
@@ -142,6 +147,13 @@ export function Journey({ mission, program, sessions, programs, sessionsDone }: 
           </div>
         </div>
       </details>
+
+      {/* 打印海报的落款：屏幕上不显示，只在导出海报时出现 */}
+      <footer className="print-foot">
+        <span>PATH / FIELD</span>
+        <span>{mission.title} · {sessionsDone} / {MISSION_TARGET}</span>
+        <span>{new Date().toLocaleDateString('zh-CN')}</span>
+      </footer>
     </div>
   )
 }

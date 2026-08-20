@@ -127,45 +127,48 @@ export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, 
         <h1 className="page-title">{planned?.title ?? '计划训练'}</h1>
       </header>
 
-      <button type="button" className="hero-cta" onClick={start}>
-        <span className="cta-icon">
-          <PlayIcon size={20} />
-        </span>
-        <span className="cta-title">
-          {selectedVariant === 'recovery' ? '开始恢复活动' : '开始训练'}
-        </span>
-        <span className="cta-sub">
-          {VARIANT_LABEL[selectedVariant]} · 约 {minutes} 分钟
-        </span>
-      </button>
+      <div className="today-main">
+        <button type="button" className="hero-cta" onClick={start}>
+          <span className="cta-icon">
+            <PlayIcon size={20} />
+          </span>
+          <span className="cta-title">
+            {selectedVariant === 'recovery' ? '开始恢复活动' : '开始训练'}
+          </span>
+          <span className="cta-sub">
+            {VARIANT_LABEL[selectedVariant]} · 约 {minutes} 分钟
+          </span>
+        </button>
 
-      {anyAnswered && (
-        <p className="body" style={{ margin: 0 }}>{variant.reason}</p>
-      )}
-      {safety !== null && safety.riskLevel !== 'none' && (
-        <p className={safety.riskLevel === 'urgent' ? 'safety urgent' : 'safety caution'}>
-          {safety.message}
-        </p>
-      )}
-
-      <section className="stat-line">
-        <span className="stat-line-item">
-          <span className="stat-line-value">{weekDone}</span>
-          <span className="stat-line-label">本周 / {program.weeklyRhythm.recommendedPerWeek} 次</span>
-        </span>
-        <span className="stat-line-item">
-          <span className="stat-line-value">{streakCurrent}</span>
-          <span className="stat-line-label">周连击</span>
-        </span>
-        {showBodyPrompt === true && onGoRecords !== undefined && (
-          <button type="button" className="ghost small stat-line-link" onClick={onGoRecords}>
-            记体重
-          </button>
+        {anyAnswered && (
+          <p className="body" style={{ margin: 0 }}>{variant.reason}</p>
         )}
-      </section>
+        {safety !== null && safety.riskLevel !== 'none' && (
+          <p className={safety.riskLevel === 'urgent' ? 'safety urgent' : 'safety caution'}>
+            {safety.message}
+          </p>
+        )}
+      </div>
 
-      <details className="fold">
-        <summary>状态微调 · 可选</summary>
+      <aside className="today-side">
+        <section className="stat-line">
+          <span className="stat-line-item">
+            <span className="stat-line-value">{weekDone}</span>
+            <span className="stat-line-label">本周 / {program.weeklyRhythm.recommendedPerWeek} 次</span>
+          </span>
+          <span className="stat-line-item">
+            <span className="stat-line-value">{streakCurrent}</span>
+            <span className="stat-line-label">周连击</span>
+          </span>
+          {showBodyPrompt === true && onGoRecords !== undefined && (
+            <button type="button" className="ghost small stat-line-link" onClick={onGoRecords}>
+              记体重
+            </button>
+          )}
+        </section>
+
+        <details className="fold">
+          <summary>状态微调 · 可选</summary>
         <div className="fold-body">
           <section>
             <p className="label">今天可用时间</p>
@@ -273,6 +276,7 @@ export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, 
           </div>
         </details>
       )}
+      </aside>
     </div>
   )
 }

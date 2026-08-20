@@ -78,9 +78,9 @@ export function ParkArt({ lit, camps = [], seed = 30607, label, caption }: Props
       }
     }
 
-    const paint = () => {
+    const paint = (ratioCap = 2) => {
       const box = canvas.getBoundingClientRect()
-      const ratio = Math.min(window.devicePixelRatio || 1, 2)
+      const ratio = Math.min(window.devicePixelRatio || 1, ratioCap)
       canvas.width = Math.max(1, Math.floor(box.width * ratio))
       canvas.height = Math.max(1, Math.floor(box.height * ratio))
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
@@ -205,9 +205,18 @@ export function ParkArt({ lit, camps = [], seed = 30607, label, caption }: Props
     }
 
     paint()
-    const observer = new ResizeObserver(paint)
+    const observer = new ResizeObserver(() => paint())
     observer.observe(canvas)
-    return () => observer.disconnect()
+    // 打印前按更高分辨率重绘，避免海报里地图发虚；打印结束恢复
+    const paintForPrint = () => paint(5)
+    const paintAfterPrint = () => paint()
+    window.addEventListener('beforeprint', paintForPrint)
+    window.addEventListener('afterprint', paintAfterPrint)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('beforeprint', paintForPrint)
+      window.removeEventListener('afterprint', paintAfterPrint)
+    }
   }, [lit, camps, seed])
 
   return (

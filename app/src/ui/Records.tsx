@@ -118,6 +118,7 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
             key={key}
             type="button"
             className={tab === key ? 'subtab selected' : 'subtab'}
+            aria-pressed={tab === key}
             onClick={() => setTab(key)}
           >
             {label}
