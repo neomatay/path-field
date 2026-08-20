@@ -1,0 +1,91 @@
+{
+  "note": "知识库一手依据清单。verification: verified=出处确定性高；unverified-detail=方向可靠但期刊/页码细节未在线核实，入库引用前建议复核一次。",
+  "sources": [
+    {
+      "id": "acsm-2009",
+      "kind": "position-stand",
+      "citation": "ACSM. Progression Models in Resistance Training for Healthy Adults. Med Sci Sports Exerc. 2009;41(3):687-708.",
+      "verification": "verified"
+    },
+    {
+      "id": "acsm-getp",
+      "kind": "guideline",
+      "citation": "ACSM's Guidelines for Exercise Testing and Prescription, 10th/11th ed.（健康筛查与抗阻处方章节）",
+      "verification": "verified"
+    },
+    {
+      "id": "nsca-essentials",
+      "kind": "textbook",
+      "citation": "NSCA. Essentials of Strength Training and Conditioning, 4th ed. 2016（抗阻训练模式、顺序与进阶章节）",
+      "verification": "verified"
+    },
+    {
+      "id": "schoenfeld-2017-volume",
+      "kind": "meta-analysis",
+      "citation": "Schoenfeld BJ, et al. Dose-response relationship between weekly resistance training volume and increases in muscle mass. J Sports Sci. 2017.",
+      "verification": "verified"
+    },
+    {
+      "id": "freq-meta",
+      "kind": "meta-analysis",
+      "citation": "Schoenfeld BJ, et al. Sports Med. 2016 与 Grgic J, et al. Sports Med. 2018（容量配平下的训练频次 meta 分析）",
+      "verification": "verified"
+    },
+    {
+      "id": "mitchell-2012",
+      "kind": "rct",
+      "citation": "Mitchell CJ, et al. Resistance training load does not determine hypertrophic response to cell signaling, muscle protein synthesis, or muscle hypertrophy. J Appl Physiol. 2012.",
+      "verification": "verified"
+    },
+    {
+      "id": "androulakis-2020",
+      "kind": "review",
+      "citation": "Androulakis-Korakakis P, et al. The Minimum Effective Training Dose Required to Increase 1RM（系统综述）. 2020.",
+      "verification": "unverified-detail",
+      "note": "期刊细节未核实；方向（有经验者极低容量仍可提升 1RM）可靠。"
+    },
+    {
+      "id": "bickel-2011",
+      "kind": "rct",
+      "citation": "Bickel CS, et al. Med Sci Sports Exerc. 2011（维持容量研究：约 1/9 原训练容量可维持肌力与肌肉量）.",
+      "verification": "verified"
+    },
+    {
+      "id": "staron-1991",
+      "kind": "rct",
+      "citation": "Staron RS, et al. Strength and skeletal muscle adaptations in heavy-resistance-trained women after detraining and retraining. J Appl Physiol. 1991.",
+      "verification": "verified"
+    },
+    {
+      "id": "foster-2001",
+      "kind": "rct",
+      "citation": "Foster C, et al. A new approach to monitoring exercise training. J Strength Cond Res. 2001;15(1):109-115.",
+      "verification": "verified"
+    },
+    {
+      "id": "warburton-2011",
+      "kind": "tool",
+      "citation": "Warburton DE, et al. The Physical Activity Readiness Questionnaire (PAR-Q+ and ePARmed-X+). 2011.",
+      "verification": "verified"
+    },
+    {
+      "id": "saw-2016",
+      "kind": "review",
+      "citation": "Saw AE, et al. Monitoring the athlete training response: subjective self-report measures. Sports Med. 2016.",
+      "verification": "verified"
+    },
+    {
+      "id": "helms-2017",
+      "kind": "review",
+      "citation": "Helms ER, et al. RIR-based RPE in resistance training（应用综述）. 2017.",
+      "verification": "verified"
+    },
+    {
+      "id": "schwanbeck-2020",
+      "kind": "meta-analysis",
+      "citation": "Schwanbeck S, et al. 自由重量 vs 器械 meta 分析. 2020.",
+      "verification": "unverified-detail",
+      "note": "结论方向（肥大相近、自由重量力量迁移略优）可靠；期刊细节未核实。"
+    }
+  ]
+}

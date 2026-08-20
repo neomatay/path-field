@@ -1,0 +1,25 @@
+{
+  "kbVersion": "1.0.0",
+  "createdAt": "2026-08-20",
+  "evidenceLevels": {
+    "strong": "系统综述/meta/立场声明或多项一致 RCT",
+    "moderate": "单项 RCT 或综述中证据方向一致但数量少",
+    "weak": "少量研究、观察性、或质量一般",
+    "inferred": "由证据推出的推论，或纯设计决策"
+  },
+  "typeLevels": {
+    "fact": "定义与度量。记录层可直接引用",
+    "interpretation": "推荐性规则。UI 措辞必须为建议，输出不落库",
+    "convention": "实践惯例，无证据线"
+  },
+  "sourceOfTruth": {
+    "sources": "本目录 sources.json",
+    "rules": "本目录 rules.json",
+    "exercises": "src/data/exercises.ts（动作与分组是运行时数据，知识库不重复维护副本；规则通过 implementedIn 指向）",
+    "planTemplates": "src/data/templates.ts（同上）"
+  },
+  "scopeV1": [
+    "规则约 24 条，每条带 type/evidence/sources",
+    "不包含：HRV、ACWR、周期化模型、伤病知识（只留红旗->就医一句话）"
+  ]
+}

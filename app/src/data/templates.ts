@@ -3,6 +3,9 @@
  * 1. return-fullbody  重返版全身训练（重返路径）
  * 2. routine-ab       全身 A / B（建立规律路径，每周 2 次固定时段，20 分钟短版可用）
  * 3. advance-lower    下肢重点计划（初步进阶路径，取自创始人真实臀腿日）
+ *
+ * v0.2 M3（2026-08-20 知识库落库）：按 KB-SESSION-04 复核课表——每课含下肢+推+拉，
+ * 修复原 A 无拉 / B 无推、水平拉与垂直推模式缺席的问题。出处见 src/knowledge/v1/。
  */
 import type { PlannedSession, Program, ProgramVariant } from '../core/types';
 
@@ -24,28 +27,31 @@ function plannedSession(id: string, title: string, intent: string, blocks: Plann
 }
 
 // ---------- 1. 重返版全身 ----------
+// KB-SESSION-04：补水平拉（坐姿划船替换侧平举，同为器械、难度 1，门槛不升）
 
 const returnA = plannedSession('return-a', '重返 · 全身', '低门槛重新建立训练节奏，采集第一条可比较记录', [
   { exerciseId: 'goblet-squat', targetSets: 3, targetReps: '8-12', keyToMission: true },
   { exerciseId: 'machine-chest-press', targetSets: 3, targetReps: '8-12', keyToMission: true },
   { exerciseId: 'lat-pulldown-neutral', targetSets: 3, targetReps: '8-12', keyToMission: true },
-  { exerciseId: 'lateral-raise', targetSets: 2, targetReps: '10-15', keyToMission: false },
+  { exerciseId: 'seated-row', targetSets: 2, targetReps: '10-12', keyToMission: false },
 ]);
 
 // ---------- 2. 全身 A / B ----------
+// KB-SESSION-04：每课含下肢 + 推 + 拉，A/B 合计每周覆盖全部 6 个基础模式（水平推 x2、垂直拉 x2，其余 x1）
+// KB-SESSION-01：多关节复合在前
 
-const routineA = plannedSession('routine-a', '全身 A · 推为主', '建立每周两次的可重复节奏', [
-  { exerciseId: 'bench-press', targetSets: 4, targetReps: '8-12', keyToMission: true },
+const routineA = plannedSession('routine-a', '全身 A', '建立每周两次的可重复节奏：下肢前侧 + 推 + 双向拉', [
   { exerciseId: 'goblet-squat', targetSets: 3, targetReps: '8-12', keyToMission: true },
-  { exerciseId: 'incline-db-press', targetSets: 3, targetReps: '8-12', keyToMission: false },
-  { exerciseId: 'lateral-raise', targetSets: 3, targetReps: '10-15', keyToMission: false },
+  { exerciseId: 'bench-press', targetSets: 4, targetReps: '8-12', keyToMission: true },
+  { exerciseId: 'lat-pulldown-neutral', targetSets: 3, targetReps: '8-12', keyToMission: false },
+  { exerciseId: 'seated-row', targetSets: 3, targetReps: '10-12', keyToMission: false },
 ]);
 
-const routineB = plannedSession('routine-b', '全身 B · 拉为主', '与 A 交替，覆盖拉与下肢后侧', [
-  { exerciseId: 'lat-pulldown-wide', targetSets: 4, targetReps: '8-12', keyToMission: true },
+const routineB = plannedSession('routine-b', '全身 B', '与 A 交替：髋后侧 + 推（水平/垂直）+ 垂直拉', [
   { exerciseId: 'hip-thrust', targetSets: 3, targetReps: '8-12', keyToMission: true },
-  { exerciseId: 'face-pull', targetSets: 3, targetReps: '12-15', keyToMission: false },
-  { exerciseId: 'rope-pushdown', targetSets: 2, targetReps: '10-15', keyToMission: false },
+  { exerciseId: 'incline-db-press', targetSets: 3, targetReps: '8-12', keyToMission: false },
+  { exerciseId: 'seated-db-ohp', targetSets: 3, targetReps: '8-12', keyToMission: false },
+  { exerciseId: 'lat-pulldown-wide', targetSets: 4, targetReps: '8-12', keyToMission: true },
 ]);
 
 // ---------- 3. 下肢重点（进阶） ----------
@@ -128,7 +134,10 @@ export function instantiateProgram(template: ProgramTemplate, missionId: string)
     weeklyRhythm: template.weeklyRhythm,
     sessions: template.sessions,
     variants: template.variants,
-    progressionRules: ['同 RPE 档下完成目标区间上限 -> 候选 +2.5kg（需确认）'],
+    // KB-PROG-01/02（src/knowledge/v1/rules.json）：RPE 门控双进阶 + 按器械档位的增量表
+    progressionRules: [
+      '同 RPE 档下完成目标区间上限 -> 候选加重（需确认）。增量按动作档位：下肢杠铃 +5kg、上肢杠铃 +2.5kg、器械/绳索/哑铃下一格、孤立小动作以次数进阶。',
+    ],
     safetyConstraints: ['urgent 信号时停止本计划。', '标记不适的动作不作为加负荷依据。'],
     rationale: template.rationale,
     status: 'draft',

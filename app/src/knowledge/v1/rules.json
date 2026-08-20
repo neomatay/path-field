@@ -1,0 +1,221 @@
+{
+  "note": "知识库规则。type 三分（产品原则「记录事实、不评判」的落点）：fact=定义与度量，记录层可直接引用；interpretation=推荐性规则，UI 措辞必须为建议，输出不落库；convention=实践惯例，无证据线。evidence 四档与 type 正交。",
+  "rules": [
+    {
+      "id": "KB-PLAN-01",
+      "domain": "plan",
+      "type": "fact",
+      "evidence": "strong",
+      "sources": ["mitchell-2012", "schoenfeld-2017-volume", "androulakis-2020"],
+      "statement": "单组训练即可产生显著增益；每周每肌群 4-8 组处于有效区间下段，足以支持低频训练者的进步。",
+      "implementedIn": ["data/templates.ts（周节奏与组数设计）"]
+    },
+    {
+      "id": "KB-PLAN-02",
+      "domain": "plan",
+      "type": "fact",
+      "evidence": "moderate",
+      "sources": ["bickel-2011"],
+      "statement": "维持阈值远低于进步阈值：约 1/9 原训练容量（每周 1 次、减组）即可维持已有肌力与肌肉量。这是「断练不清零」的生理学依据。"
+    },
+    {
+      "id": "KB-PLAN-03",
+      "domain": "plan",
+      "type": "fact",
+      "evidence": "strong",
+      "sources": ["freq-meta"],
+      "statement": "容量配平（volume-equated）后，训练频次对肥大与力量的差异基本消失。频次是切分给定容量的方式，不是独立驱动变量。"
+    },
+    {
+      "id": "KB-PLAN-04",
+      "domain": "plan",
+      "type": "fact",
+      "evidence": "strong",
+      "sources": ["acsm-2009"],
+      "statement": "ACSM 建议每肌群每周训练 2-3 次（非连续日）。每周 2 次全身课正好达到每肌群 2 次/周。"
+    },
+    {
+      "id": "KB-PLAN-05",
+      "domain": "plan",
+      "type": "interpretation",
+      "evidence": "inferred",
+      "sources": ["acsm-2009", "freq-meta"],
+      "statement": "每周 2 次时全身 A/B 优于上下分化：每肌群 2 次/周，且错过单次课不丢动作模式覆盖（与「不惩罚」原则契合）。",
+      "implementedIn": ["data/templates.ts（routine-ab）"]
+    },
+    {
+      "id": "KB-PLAN-06",
+      "domain": "plan",
+      "type": "fact",
+      "evidence": "moderate",
+      "sources": ["staron-1991"],
+      "statement": "中断后重获力量/肌肉快于首次获得（detrain-retrain 效应；机制存在争议）。",
+      "implementedIn": ["core/rules/returnRules.ts"]
+    },
+    {
+      "id": "KB-PLAN-07",
+      "domain": "plan",
+      "type": "convention",
+      "evidence": "inferred",
+      "sources": [],
+      "statement": "重启期前 2-4 次课：RPE 上限 6、容量约完整版 70%、重量从既往 50-70% 起。具体数值为实践惯例，无证据线。"
+    },
+    {
+      "id": "KB-SESSION-01",
+      "domain": "session-design",
+      "type": "interpretation",
+      "evidence": "strong",
+      "sources": ["acsm-2009", "nsca-essentials"],
+      "statement": "多关节复合动作排在单关节孤立动作之前：神经系统要求高的动作先做，避免预先疲劳破坏复合动作质量。"
+    },
+    {
+      "id": "KB-SESSION-02",
+      "domain": "session-design",
+      "type": "interpretation",
+      "evidence": "inferred",
+      "sources": ["mitchell-2012"],
+      "statement": "短版优先降组数而非删动作模式（单组仍显著有效）；孤立辅助动作先于关键复合动作被删。",
+      "implementedIn": ["data/templates.ts（variants.short.keeps/removed）"]
+    },
+    {
+      "id": "KB-SESSION-04",
+      "domain": "session-design",
+      "type": "interpretation",
+      "evidence": "moderate",
+      "sources": ["acsm-2009", "freq-meta"],
+      "statement": "每次全身课同时包含推与拉（水平或垂直）：2 次课让每个模式约 2 次/周，且错过单次课只丢一半容量、不丢整类模式。课表按模式覆盖检查，不按肌群感觉。",
+      "implementedIn": ["data/templates.ts（routine-a / routine-b / return-a）"]
+    },
+    {
+      "id": "KB-SESSION-03",
+      "domain": "session-design",
+      "type": "interpretation",
+      "evidence": "weak",
+      "sources": [],
+      "statement": "恢复版 = 低强度有氧 20-30 分钟 + 可选轻负荷全身（每动作 1 组、RPE<=4）。主动恢复证据质量一般；恢复版是维持性剂量，不是独立计划。"
+    },
+    {
+      "id": "KB-SELECT-01",
+      "domain": "exercise-selection",
+      "type": "fact",
+      "evidence": "moderate",
+      "sources": ["schwanbeck-2020"],
+      "statement": "器械与自由重量的肥大效果相近；自由重量在力量/稳定性迁移上可能略优。"
+    },
+    {
+      "id": "KB-SELECT-02",
+      "domain": "exercise-selection",
+      "type": "interpretation",
+      "evidence": "inferred",
+      "sources": ["schwanbeck-2020"],
+      "statement": "状态差、时间紧或场地拥挤时选器械变体：技能需求低、setup 快、力竭安全边界宽。",
+      "implementedIn": ["data/exercises.ts（substitutionGroupId 替换组）"]
+    },
+    {
+      "id": "KB-ASSESS-01",
+      "domain": "assessment",
+      "type": "interpretation",
+      "evidence": "strong",
+      "sources": ["warburton-2011", "acsm-getp"],
+      "statement": "PAR-Q+ 是参与前筛查工具，入门执行一次；阳性项建议咨询医生后再开始完整版。当次签到管当日状态，两者不重叠。"
+    },
+    {
+      "id": "KB-ASSESS-02",
+      "domain": "assessment",
+      "type": "fact",
+      "evidence": "moderate",
+      "sources": ["saw-2016"],
+      "statement": "签到四项（时间/精力/睡眠/不适）是运动员 wellness 自陈问卷的低负担子集，与训练状态相关。四项够用。"
+    },
+    {
+      "id": "KB-ASSESS-03",
+      "domain": "assessment",
+      "type": "convention",
+      "evidence": "weak",
+      "sources": [],
+      "statement": "睡眠 <6h 建议短版。切分线是实践惯例而非证据结论（急性睡眠剥夺对最大力量影响小；慢性短睡眠影响恢复质量）。UI 措辞必须是建议而非禁令。",
+      "implementedIn": ["core/rules/variant.ts（VARIANT-SHORT-02 的 sleepBand 条件）"]
+    },
+    {
+      "id": "KB-ASSESS-04",
+      "domain": "assessment",
+      "type": "interpretation",
+      "evidence": "strong",
+      "sources": [],
+      "statement": "红旗信号（明显疼痛/不适）只允许恢复版；疼痛下训练的证据普遍负面。文案到「停止训练，如持续/加重建议就医」为止，不做诊断性陈述。",
+      "implementedIn": ["core/rules/safety.ts（SAFE-URGENT-01/02）"]
+    },
+    {
+      "id": "KB-ASSESS-05",
+      "domain": "assessment",
+      "type": "convention",
+      "evidence": "moderate",
+      "sources": ["saw-2016"],
+      "statement": "HRV 不进 v1：需长期基线、个体变异大，主要在耐力监测中验证。"
+    },
+    {
+      "id": "KB-ASSESS-06",
+      "domain": "assessment",
+      "type": "convention",
+      "evidence": "weak",
+      "sources": [],
+      "statement": "ACWR（急慢性负荷比）不进 v1：方法论近年受严肃批评（比值数学性质导致的伪相关）。"
+    },
+    {
+      "id": "KB-ASSESS-07",
+      "domain": "assessment",
+      "type": "convention",
+      "evidence": "moderate",
+      "sources": ["foster-2001"],
+      "statement": "sRPE 练后 30 分钟内采集（防记忆偏差）；只记数值，只在个体内趋势有解释力，不做阈值告警。"
+    },
+    {
+      "id": "KB-MEAS-01",
+      "domain": "measurement",
+      "type": "fact",
+      "evidence": "strong",
+      "sources": ["foster-2001"],
+      "statement": "session load = sRPE x 时长（分钟）作为内部负荷监测工具可靠（Foster 模型）；绝对值无跨人可比性。"
+    },
+    {
+      "id": "KB-MEAS-02",
+      "domain": "measurement",
+      "type": "fact",
+      "evidence": "strong",
+      "sources": ["acsm-getp", "helms-2017"],
+      "statement": "RPE 锚点定义含次数储备（RIR）对照；RPE 是百分比对标的可行替代处方方式。"
+    },
+    {
+      "id": "KB-PROG-01",
+      "domain": "progression",
+      "type": "interpretation",
+      "evidence": "moderate",
+      "sources": ["nsca-essentials", "acsm-2009"],
+      "statement": "同 RPE 档下目标组数全部达到次数区间上限 -> 候选加重，用户确认后生效。这是双进阶（double progression）的 RPE 门控变体，比经典做法更保守。进阶追踪挂在模式组（substitutionGroup）而非具体动作：换变体后首次课按 RPE 重新校准。",
+      "implementedIn": ["core/rules/reviewRules.ts（buildProgressionCandidates）"]
+    },
+    {
+      "id": "KB-PROG-02",
+      "domain": "progression",
+      "type": "convention",
+      "evidence": "inferred",
+      "sources": [],
+      "statement": "加重增量按器械档位，不固定 +2.5kg：固定 +2.5kg 对孤立动作是 5-10% 的负荷跳跃，会卡死进阶。",
+      "params": {
+        "barbellLower": "+5kg",
+        "barbellUpper": "+2.5kg",
+        "machineCableDumbbell": "下一配重格；不足则次数进阶",
+        "smallIsolation": "次数进阶为主，重量 +1kg"
+      },
+      "implementedIn": ["data/exercises.ts（loadIncrement 字段）", "data/templates.ts（progressionRules）"]
+    },
+    {
+      "id": "KB-PROG-03",
+      "domain": "progression",
+      "type": "convention",
+      "evidence": "weak",
+      "sources": [],
+      "statement": "同一动作连续 3-4 次未触发进阶 -> 换同组变体或调整次数区间，不硬加重量。哑铃/器械档位不连续时，次数区间上端放宽至 15。"
+    }
+  ]
+}
