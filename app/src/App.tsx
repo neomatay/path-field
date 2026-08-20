@@ -41,7 +41,7 @@ const TABS = [
 function App() {
   const {
     loaded, activeMission, activeProgram, nextPlannedSessionId, sessions, programs,
-    programSessions, missions, bodyMetrics, templateChoices, startWithTemplate,
+    programSessions, incompleteSession, missions, bodyMetrics, templateChoices, startWithTemplate,
     archiveActivePlan, saveSession, saveBodyMetric, evidences, saveEvidence,
     saveDecision, saveMission, decisions,
   } = usePath()
@@ -222,11 +222,21 @@ function App() {
             weekDone={weekDone}
             streakCurrent={streakCurrent}
             showBodyPrompt={!thisWeekHasWeight}
+            resumable={draft === null ? incompleteSession : undefined}
             onGoRecords={() => setScreen('records')}
             onStartTraining={(s) => {
               setDraft(s)
               void saveSession(s)
               setScreen('training')
+            }}
+            onResume={() => {
+              if (incompleteSession === undefined) return
+              setDraft(incompleteSession)
+              setScreen('training')
+            }}
+            onDiscard={() => {
+              if (incompleteSession === undefined) return
+              void saveSession({ ...incompleteSession, endedAt: new Date().toISOString(), outcome: 'skipped' })
             }}
           />
         )}

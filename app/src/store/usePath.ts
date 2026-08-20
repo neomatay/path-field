@@ -79,11 +79,17 @@ export function usePath() {
       ? undefined
       : programs.find((p) => p.status === 'active' && p.missionId === activeMission.id)
 
-  /** 属于当前计划的训练记录（用于课次轮换与旅程进度；换计划后从头数） */
+  /** 属于当前计划的训练记录（用于课次轮换与旅程进度；换计划后从头数）。
+   *  完整/短版/恢复三个版本都算点亮；进行中（endedAt 为空）与作废（skipped）不算。 */
   const programSessions =
     activeProgram === undefined
       ? []
-      : sessions.filter((s) => s.programId === activeProgram.id)
+      : sessions.filter(
+          (s) => s.programId === activeProgram.id && s.endedAt !== undefined && s.outcome !== 'skipped',
+        )
+
+  /** 进行中的训练（endedAt 为空）：中断/刷新后可从今天页续练 */
+  const incompleteSession = sessions.find((s) => s.endedAt === undefined)
 
   const startWithTemplate = useCallback(async (template: ProgramTemplate, answers?: OnboardingAnswers) => {
     const now = new Date().toISOString()
@@ -181,6 +187,7 @@ export function usePath() {
     bodyMetrics,
     evidences,
     programSessions,
+    incompleteSession,
     activeMission,
     activeProgram,
     nextPlannedSessionId,

@@ -181,19 +181,32 @@ export function Receipt({ session, history, program, onDone, onDecide }: Props) 
 
       {recorded.length > 0 && (
         <section>
-          <p className="label">动作</p>
+          <p className="label">动作 · 逐组记录</p>
           <ul className="evidence">
             {recorded.map((b) => {
+              const doneSets = b.sets.filter((s) => (s.reps ?? 0) > 0 || s.doneAt !== undefined)
               const top = topSetOf(session, b.exerciseId)
               return (
                 <li key={b.exerciseId} className="fact">
                   <span className="marker ring" />
                   {EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}
-                  {top !== undefined && (
-                    <span className="meta">
-                      {' '}· {top.weightKg !== undefined ? `${top.weightKg}kg x ${top.reps}` : `${top.reps} 次`}
-                    </span>
-                  )}
+                  <span className="meta">
+                    {' '}· {doneSets.length} 组
+                    {top !== undefined && (
+                      <> · 最高 {top.weightKg !== undefined ? `${top.weightKg}kg x ${top.reps}` : `${top.reps} 次`}</>
+                    )}
+                  </span>
+                  <ul className="set-list">
+                    {doneSets.map((s, i) => (
+                      <li key={i} className={s.doneAt !== undefined ? 'set-row done' : 'set-row'}>
+                        <span className="meta">
+                          第{s.setIndex + 1}组 · {s.weightKg !== undefined ? `${s.weightKg}kg x ${s.reps ?? '?'}` : `${s.reps ?? '?'} 次`}
+                          {s.rpe !== undefined ? ` @RPE${s.rpe}` : ''}
+                          {s.doneAt !== undefined ? ' · ✓' : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               )
             })}

@@ -491,7 +491,7 @@
 
 .set-grid {
   display: grid;
-  grid-template-columns: 28px 1fr 1fr 1fr;
+  grid-template-columns: 24px 1fr 1fr 1fr 38px;
   gap: 7px;
   align-items: center;
 }
@@ -502,6 +502,121 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.7;
+}
+
+/* 已完成组：整行浅绿，输入只读观感不变 */
+.set-grid.done input {
+  background: rgba(32, 90, 62, 0.1);
+  border-color: rgba(32, 90, 62, 0.4);
+}
+
+/* 组完成勾选按钮 */
+.set-check {
+  height: 38px;
+  border-radius: 7px;
+  border: 1.5px solid rgba(28, 42, 35, 0.3);
+  background: rgba(255, 255, 255, 0.45);
+  color: rgba(28, 42, 35, 0.35);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.set-check.checked {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: var(--paper);
+}
+
+/* 会话计时器：进入训练即计时 */
+.training-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.session-timer {
+  font-family: var(--mono, monospace);
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--forest);
+  padding: 6px 10px;
+  border: 1px solid rgba(28, 42, 35, 0.25);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+}
+
+/* 组间歇倒计时条：固定在底部，不挡内容 */
+.rest-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid rgba(28, 42, 35, 0.3);
+  box-shadow: 0 6px 18px rgba(28, 42, 35, 0.18);
+  max-width: calc(100vw - 32px);
+}
+
+.rest-clock {
+  font-family: var(--mono, monospace);
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--forest);
+}
+
+.rest-label {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* 间歇结束：呼吸提醒 */
+.rest-bar.finished {
+  border-color: var(--sun);
+  animation: rest-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes rest-pulse {
+  0%, 100% { box-shadow: 0 6px 18px rgba(28, 42, 35, 0.18); }
+  50% { box-shadow: 0 6px 18px rgba(236, 169, 61, 0.55); }
+}
+
+/* 收据页逐组记录 */
+.set-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding-left: 8px;
+}
+
+.set-row.done .meta {
+  color: var(--forest);
+}
+
+/* 进行中训练的续练卡片（今天页） */
+.resume-card {
+  padding: 12px;
+  border: 1px solid rgba(236, 169, 61, 0.55);
+  border-radius: 10px;
+  background: rgba(236, 169, 61, 0.08);
+  margin-bottom: 12px;
+}
+
+.resume-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .set-grid input {

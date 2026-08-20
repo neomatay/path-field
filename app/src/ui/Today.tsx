@@ -53,11 +53,15 @@ interface Props {
   streakCurrent: number
   /** 本周还没记录体重时显示轻提示 */
   showBodyPrompt?: boolean
+  /** 进行中的训练（上次没点结束就离开了）：可续练或作废 */
+  resumable?: Session
   onGoRecords?: () => void
   onStartTraining: (session: Session) => void
+  onResume?: () => void
+  onDiscard?: () => void
 }
 
-export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, showBodyPrompt, onGoRecords, onStartTraining }: Props) {
+export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, showBodyPrompt, resumable, onGoRecords, onStartTraining, onResume, onDiscard }: Props) {
   const [availableMinutes, setMinutes] = useState<number | null>(null)
   const [readiness, setReadiness] = useState<CurrentState['readiness'] | null>(null)
   const [discomfort, setDiscomfort] = useState<DiscomfortLevel | null>(null)
@@ -128,6 +132,17 @@ export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, 
       </header>
 
       <div className="today-main">
+        {resumable !== undefined && (
+          <div className="resume-card">
+            <p className="body" style={{ margin: 0 }}>
+              有一组训练没做完（{new Date(resumable.startedAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}开始，已填的记录都在）。
+            </p>
+            <div className="resume-actions">
+              <button type="button" className="primary small" onClick={onResume}>继续这组训练</button>
+              <button type="button" className="ghost small" onClick={onDiscard}>不练了，作废</button>
+            </div>
+          </div>
+        )}
         <button type="button" className="hero-cta" onClick={start}>
           <span className="cta-icon">
             <PlayIcon size={20} />

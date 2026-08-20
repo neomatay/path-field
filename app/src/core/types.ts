@@ -179,6 +179,8 @@ export interface ActualSet {
   weightKg?: number;
   reps?: number;
   rpe?: number;
+  /** 勾选完成该组的时间（事实：你何时练完了它；不勾也有重量/次数记录） */
+  doneAt?: ISO8601;
 }
 
 export interface ActualBlock {

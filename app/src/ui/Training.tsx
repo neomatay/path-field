@@ -1,11 +1,23 @@
 /**
- * 训练执行页：逐组记录重量/次数/RPE。
- * M2 补充：动作要点、首次起始建议、上次同条件表现参照、常显替换（点击立即切换，可换回）。
+ * 训练执行页：计时开始（进入即计时）+ 逐组记录重量/次数/RPE + 组完成勾选（勾完起组间歇倒计时）。
+ * 动作要点、上次同条件表现参照、常显替换（点击立即切换，可换回）。
  * 短版只保留 keyToMission 的动作块；恢复版无负荷训练，只做状态记录。
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ActualBlock, DiscomfortLevel, Program, Session } from '../core/types'
 import { EXERCISES_BY_ID, lastPerformance, regressionsFor, substitutionsFor } from '../data/exercises'
+
+/** 组间歇默认 90 秒（惯例值，非证据结论）；可加 30 秒或直接跳过 */
+const REST_SECONDS = 90
+
+function fmtClock(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  const mm = String(h > 0 ? m : m).padStart(h > 0 ? 2 : 1, '0')
+  return `${h > 0 ? `${h}:` : ''}${mm}:${String(s).padStart(2, '0')}`
+}
 
 interface Props {
   program: Program
@@ -34,18 +46,59 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
   }, [program, session])
 
   const [blocks, setBlocks] = useState<ActualBlock[]>(() =>
-    visibleBlocks.map((b) => ({
-      exerciseId: b.exerciseId,
-      plannedReps: b.targetReps,
-      sets: Array.from({ length: b.targetSets }, (_, i) => ({ setIndex: i })),
-    })),
+    session.actualBlocks.length > 0
+      ? session.actualBlocks
+      : visibleBlocks.map((b) => ({
+          exerciseId: b.exerciseId,
+          plannedReps: b.targetReps,
+          sets: Array.from({ length: b.targetSets }, (_, i) => ({ setIndex: i })),
+        })),
   )
   const [discomfort, setDiscomfort] = useState<DiscomfortLevel>('none')
+
+  // 训练中实时落库：每次改动都保存（endedAt 为空 = 进行中，刷新/锁屏后可从今天页续练）
+  useEffect(() => {
+    onChange({ ...session, actualBlocks: blocks, outcome: 'partial' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blocks])
+
+  // 会话计时：进入训练即计时；间歇倒计时共用这 1 秒一跳的时钟
+  const [now, setNow] = useState(() => Date.now())
+  const [restUntil, setRestUntil] = useState<number | null>(null)
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(t)
+  }, [])
+  const elapsed = now - Date.parse(session.startedAt)
+  const restLeft = restUntil === null ? null : restUntil - now
+
+  // 间歇结束时提醒一次（视觉 + 设备震动，可用则用）
+  const [restNotified, setRestNotified] = useState(false)
+  useEffect(() => {
+    if (restLeft !== null && restLeft <= 0 && !restNotified) {
+      setRestNotified(true)
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate?.([120, 80, 120])
+    }
+  }, [restLeft, restNotified])
 
   const updateSet = (bi: number, si: number, patch: Partial<{ weightKg: number; reps: number; rpe: number }>) => {
     setBlocks((prev) =>
       prev.map((b, i) =>
         i !== bi ? b : { ...b, sets: b.sets.map((s, j) => (j !== si ? s : { ...s, ...patch })) },
+      ),
+    )
+  }
+
+  /** 勾选完成一组：记录完成时间并启动组间歇；再点取消勾选 */
+  const toggleDone = (bi: number, si: number) => {
+    const wasDone = blocks[bi]?.sets[si]?.doneAt !== undefined
+    if (!wasDone) {
+      setRestUntil(Date.now() + REST_SECONDS * 1000)
+      setRestNotified(false)
+    }
+    setBlocks((prev) =>
+      prev.map((b, i) =>
+        i !== bi ? b : { ...b, sets: b.sets.map((s, j) => (j !== si ? s : { ...s, doneAt: wasDone ? undefined : new Date().toISOString() })) },
       ),
     )
   }
@@ -105,13 +158,18 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
 
   return (
     <div className="training">
-      <header>
-        <p className="label">
-          {isRecovery ? '恢复活动' : session.selectedVariant === 'short' ? '短版训练' : '完整训练'}
-        </p>
-        <p className="body">
-          {isRecovery ? '低压力活动，随时可结束。' : '记下实际组数与重量，替换和跳过都行。'}
-        </p>
+      <header className="training-head">
+        <div>
+          <p className="label">
+            {isRecovery ? '恢复活动' : session.selectedVariant === 'short' ? '短版训练' : '完整训练'}
+          </p>
+          <p className="body">
+            {isRecovery ? '低压力活动，随时可结束。' : '练完一组点 ✓，间歇倒计时自动开始。'}
+          </p>
+        </div>
+        <div className="session-timer" role="timer" aria-label="已训练时长">
+          {fmtClock(elapsed)}
+        </div>
       </header>
 
       {isRecovery ? (
@@ -155,10 +213,10 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
               ) : (
                 <>
                   <div className="set-grid head">
-                    <span>组</span><span>重量 kg</span><span>次数</span><span>RPE</span>
+                    <span>组</span><span>重量 kg</span><span>次数</span><span>RPE</span><span>完成</span>
                   </div>
                   {block.sets.map((s, si) => (
-                    <div key={si} className="set-grid">
+                    <div key={si} className={s.doneAt !== undefined ? 'set-grid done' : 'set-grid'}>
                       <span className="meta">{si + 1}</span>
                       <input
                         type="number" inputMode="decimal" min={0} step={2.5}
@@ -175,6 +233,15 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
                         value={s.rpe ?? ''} placeholder="—"
                         onChange={(e) => updateSet(bi, si, { rpe: e.target.value === '' ? undefined : Number(e.target.value) })}
                       />
+                      <button
+                        type="button"
+                        className={s.doneAt !== undefined ? 'set-check checked' : 'set-check'}
+                        aria-pressed={s.doneAt !== undefined}
+                        aria-label={`第 ${si + 1} 组完成`}
+                        onClick={() => toggleDone(bi, si)}
+                      >
+                        ✓
+                      </button>
                     </div>
                   ))}
                   <div className="block-actions">
@@ -225,6 +292,26 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
           ))}
         </div>
       </section>
+
+      {/* 组间歇倒计时：勾完一组自动开始；固定在底部，随时可加时/跳过 */}
+      {restLeft !== null && (
+        <div className={restLeft <= 0 ? 'rest-bar finished' : 'rest-bar'} role="timer" aria-label="组间歇倒计时">
+          {restLeft > 0 ? (
+            <>
+              <span className="rest-clock">{fmtClock(restLeft)}</span>
+              <span className="rest-label">组间歇</span>
+              <button type="button" className="ghost small" onClick={() => setRestUntil((r) => (r ?? now) + 30000)}>+30s</button>
+              <button type="button" className="ghost small" onClick={() => setRestUntil(null)}>跳过</button>
+            </>
+          ) : (
+            <>
+              <span className="rest-clock">0:00</span>
+              <span className="rest-label">间歇结束，可以开始下一组</span>
+              <button type="button" className="ghost small" onClick={() => setRestUntil(null)}>知道了</button>
+            </>
+          )}
+        </div>
+      )}
 
       <button type="button" className="primary" onClick={finish}>结束训练</button>
     </div>
