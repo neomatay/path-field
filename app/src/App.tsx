@@ -43,6 +43,7 @@ function App() {
     loaded, activeMission, activeProgram, nextPlannedSessionId, sessions, programs,
     programSessions, missions, bodyMetrics, templateChoices, startWithTemplate,
     archiveActivePlan, saveSession, saveBodyMetric, evidences, saveEvidence,
+    saveDecision, saveMission, decisions,
   } = usePath()
   const [screen, setScreenState] = useState<Screen>(screenFromHash)
 
@@ -237,6 +238,7 @@ function App() {
             sessions={sessions}
             programs={programs}
             sessionsDone={programSessions.length}
+            programSessions={programSessions}
           />
         )}
         {screen === 'records' && (
@@ -244,7 +246,11 @@ function App() {
             sessions={sessions}
             programs={programs}
             bodyMetrics={bodyMetrics}
+            mission={activeMission}
+            evidences={evidences}
+            decisions={decisions}
             onSaveBodyMetric={(b) => void saveBodyMetric(b)}
+            onSaveMission={(m) => void saveMission(m)}
           />
         )}
 
@@ -265,6 +271,8 @@ function App() {
           <Receipt
             session={draft}
             history={sessions}
+            program={activeProgram}
+            onDecide={(d) => void saveDecision(d)}
             onDone={() => {
               setDraft(null)
               setScreen('today')

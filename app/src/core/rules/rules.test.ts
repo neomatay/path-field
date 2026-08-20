@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { discomfortToSafetyInput, evaluateSafety, mayOfferFullVariant } from './safety';
 import { evaluateVariant } from './variant';
 import { evaluateReturn } from './returnRules';
-import { buildComparableGroups, buildProgressionCandidates, evaluateWeeklyReview } from './reviewRules';
+import { buildComparableGroups, buildProgressionCandidates, evaluateWeeklyReview, maxRepsTargetsOf } from './reviewRules';
 import type { ActualBlock, Session } from '../types';
 import { EXERCISES, substitutionsFor } from '../../data/exercises';
 import { TEMPLATES, instantiateProgram } from '../../data/templates';
@@ -200,6 +200,21 @@ describe('周复盘', () => {
     expect(bodyweight).toHaveLength(1);
     expect(bodyweight[0].incrementMode).toBe('repsOnly');
     expect(bodyweight[0].reason).toContain('次数进阶');
+  });
+
+  it('maxRepsTargetsOf 解析区间与单一目标（收据页进阶判断的输入）', () => {
+    // 用真实模板实例化：每个动作都能取到目标上限
+    const missionId = 'm-test';
+    const program = { ...instantiateProgram(TEMPLATES[1], missionId), id: 'p-test', createdAt: '2026-01-01T00:00:00Z', status: 'active' as const };
+    const targets = maxRepsTargetsOf(program);
+    const exerciseIds = program.sessions.flatMap((s) => s.blocks.map((b) => b.exerciseId));
+    for (const id of exerciseIds) {
+      expect(targets[id], `动作 ${id} 应有目标上限`).toBeDefined();
+      expect(targets[id].maxReps).toBeGreaterThan(0);
+    }
+    // "8-12" 取 12，"10-12" 取 12
+    expect(targets['goblet-squat'].maxReps).toBe(12);
+    expect(targets['seated-row'].maxReps).toBe(12);
   });
 });
 

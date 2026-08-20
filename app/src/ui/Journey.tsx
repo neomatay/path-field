@@ -5,6 +5,7 @@
 import type { Mission, Program, Session } from '../core/types'
 import { EXERCISES_BY_ID } from '../data/exercises'
 import { ACHIEVEMENTS, achievementsOf, weekStreak } from '../core/stats'
+import { evaluateWeeklyReview } from '../core/rules/reviewRules'
 import { MANIFEST, RULES_BY_ID, SOURCES_BY_ID } from '../knowledge'
 import type { EvidenceLevel } from '../knowledge'
 import { ParkArt } from './ParkArt'
@@ -16,6 +17,8 @@ interface Props {
   programs: Program[]
   /** 当前计划内已记录的训练次数（三个版本都算点亮） */
   sessionsDone: number
+  /** 当前计划内的训练记录（周复盘按计划范围采样） */
+  programSessions: Session[]
 }
 
 /** Mission 目标：8 次记录走完这段路线（与 ADR-002 自用通过标准一致） */
@@ -40,13 +43,29 @@ const EVIDENCE_LABEL: Record<EvidenceLevel, string> = {
   inferred: '推断',
 }
 
-export function Journey({ mission, program, sessions, programs, sessionsDone }: Props) {
+export function Journey({ mission, program, sessions, programs, sessionsDone, programSessions }: Props) {
   const reviewDate = new Date(mission.reviewDate).toLocaleDateString('zh-CN')
   const progress = Math.min(1, sessionsDone / MISSION_TARGET)
   const nextCampAt = CAMPS.find((c) => c > progress)
   const toNextCamp = nextCampAt === undefined ? 0 : Math.ceil(nextCampAt * MISSION_TARGET) - sessionsDone
   const streak = weekStreak(sessions, program.weeklyRhythm.minViablePerWeek)
   const earned = new Set(achievementsOf(sessions, programs))
+
+  // 本周复盘：自然周（周一起）+ 当前计划范围内的记录
+  const monday = new Date()
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+  monday.setHours(0, 0, 0, 0)
+  const weekSessions = programSessions.filter((s) => Date.parse(s.startedAt) >= monday.getTime())
+  const hasUnresolvedCaution = weekSessions.some(
+    (s) => s.checkOut.discomfort === 'noticeable' || s.checkOut.discomfort === 'urgentSignal',
+  )
+  const weekly = evaluateWeeklyReview(weekSessions, hasUnresolvedCaution)
+  const weekEnd = new Date(monday.getTime() + 6 * 86400000)
+  const withNames = (text: string) =>
+    Object.values(EXERCISES_BY_ID).reduce(
+      (acc, e) => acc.replaceAll(e.id, e.name),
+      text,
+    )
 
   return (
     <div className="journey">
@@ -97,6 +116,54 @@ export function Journey({ mission, program, sessions, programs, sessionsDone }: 
           ))}
         </div>
       </section>
+
+      <details className="fold">
+        <summary>
+          本周复盘 · {monday.getMonth() + 1}月{monday.getDate()}日 - {weekEnd.getMonth() + 1}月{weekEnd.getDate()}日
+        </summary>
+        <div className="fold-body">
+          <p className="label">事实</p>
+          <ul className="plain-list">
+            {weekly.facts.map((f, i) => (
+              <li key={i}>{withNames(f)}</li>
+            ))}
+          </ul>
+
+          {weekly.observations.length > 0 && (
+            <div>
+              <p className="label">观察</p>
+              {weekly.observations.map((o, i) => (
+                <p key={i} className="body">
+                  {withNames(o.statement)}
+                  <br />
+                  <span className="meta">边界：{o.boundary}</span>
+                </p>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <p className="label">待确认</p>
+            <ul className="plain-list">
+              {weekly.toConfirm.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="label">下周可选</p>
+            <ul className="plain-list">
+              {weekly.options.map((o) => (
+                <li key={o.id}>
+                  {o.label}——{o.effect}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="meta">复盘只陈述本周发生了什么，不评判顺从，也不清零。</p>
+        </div>
+      </details>
 
       <details className="fold">
         <summary>计划详情</summary>

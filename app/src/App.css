@@ -348,6 +348,35 @@
   font-weight: 600;
 }
 
+/* ---------- 进阶候选决策（收据页） ---------- */
+
+.prog-decision {
+  padding: 12px;
+  border: 1px solid rgba(28, 42, 35, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  margin-bottom: 10px;
+}
+
+.prog-reason {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ---------- Mission 编辑（档案 tab） ---------- */
+
+.mission-edit {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid rgba(28, 42, 35, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* ---------- 版本选择 ---------- */
 
 .variants {

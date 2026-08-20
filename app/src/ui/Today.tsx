@@ -89,7 +89,7 @@ export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, 
     program.sessions.find((s) => s.id === nextPlannedSessionId) ?? program.sessions[0]
 
   const selectedVariant = chosen ?? variant.recommended
-  const fullBlocked = selectedVariant === 'full' && safety?.riskLevel !== 'none'
+  const fullBlocked = selectedVariant === 'full' && safety !== null && safety.riskLevel !== 'none'
 
   const start = () => {
     if (fullBlocked) return

@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getAll, put } from './db'
 import { TEMPLATES, instantiateProgram, type ProgramTemplate } from '../data/templates'
-import type { BodyMetric, Evidence, Mission, Program, Session } from '../core/types'
+import type { BodyMetric, Decision, Evidence, Mission, Program, Session } from '../core/types'
 
 /** 入口追问的答案（可选填，跳过也允许） */
 export interface OnboardingAnswers {
@@ -50,22 +50,25 @@ export function usePath() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [bodyMetrics, setBodyMetrics] = useState<BodyMetric[]>([])
   const [evidences, setEvidences] = useState<Evidence[]>([])
+  const [decisions, setDecisions] = useState<Decision[]>([])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     void (async () => {
-      const [m, p, s, b, e] = await Promise.all([
+      const [m, p, s, b, e, d] = await Promise.all([
         getAll<Mission>('missions'),
         getAll<Program>('programs'),
         getAll<Session>('sessions'),
         getAll<BodyMetric>('bodyMetrics'),
         getAll<Evidence>('evidence'),
+        getAll<Decision>('decisions'),
       ])
       setMissions(m.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)))
       setPrograms(p)
       setSessions(s.sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt)))
       setBodyMetrics(b.sort((a, b) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt)))
       setEvidences(e.sort((a, b) => Date.parse(b.recordedAt) - Date.parse(a.recordedAt)))
+      setDecisions(d.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)))
       setLoaded(true)
     })()
   }, [])
@@ -137,6 +140,22 @@ export function usePath() {
     ))
   }, [])
 
+  /** 落库一条决策（进阶采用/拒绝等）：候选只是候选，用户选择才成为事实 */
+  const saveDecision = useCallback(async (d: Decision) => {
+    await put('decisions', d)
+    setDecisions((prev) => [d, ...prev.filter((x) => x.id !== d.id)].sort(
+      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+    ))
+  }, [])
+
+  /** 更新 Mission（编辑目标/次数/注意部位）；创建事实与记录不动 */
+  const saveMission = useCallback(async (m: Mission) => {
+    await put('missions', m)
+    setMissions((prev) => [m, ...prev.filter((x) => x.id !== m.id)].sort(
+      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+    ))
+  }, [])
+
   /** 下一次计划训练：按当前计划的完成次数轮换模板内的 session */
   const nextPlannedSessionId =
     activeProgram === undefined || activeProgram.sessions.length === 0
@@ -171,5 +190,8 @@ export function usePath() {
     saveSession,
     saveBodyMetric,
     saveEvidence,
+    saveDecision,
+    saveMission,
+    decisions,
   }
 }

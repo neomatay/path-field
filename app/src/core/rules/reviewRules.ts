@@ -9,8 +9,25 @@
  * 进阶规则（ROADMAP 第 6.5 条 + KB-PROG-02）：
  * 同 RPE 档下完成目标区间上限 -> 按动作的增量策略给候选（分档加重 / 升配重格 / 次数进阶），需 Decision 确认。
  */
-import type { ActualBlock, Session } from '../types';
+import type { ActualBlock, Program, Session } from '../types';
 import { EXERCISES_BY_ID } from '../../data/exercises';
+
+/** 从计划的 targetReps（如 "8-12" 或 "12"）取上限，作为进阶判断的目标区间 */
+export function maxRepsTargetsOf(program: Program): Record<string, { maxReps: number }> {
+  const targets: Record<string, { maxReps: number }> = {};
+  for (const s of program.sessions) {
+    for (const b of s.blocks) {
+      const m = /(\d+)\s*-\s*(\d+)/.exec(b.targetReps);
+      if (m !== null) {
+        targets[b.exerciseId] = { maxReps: Number(m[2]) };
+      } else {
+        const single = /^(\d+)$/.exec(b.targetReps.trim());
+        if (single !== null) targets[b.exerciseId] = { maxReps: Number(single[1]) };
+      }
+    }
+  }
+  return targets;
+}
 
 export interface ComparableGroup {
   exerciseId: string;

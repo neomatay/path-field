@@ -1,9 +1,10 @@
 /**
- * 记录页（仪表盘结构）：顶部数字条 + 页内分类 tab（训练 / 身体 / 最佳）。
+ * 记录页（仪表盘结构）：顶部数字条 + 页内分类 tab（训练 / 身体 / 最佳 / 档案）。
  * 只展示发生了什么的事实，不做能力判断——判断属于周复盘。
+ * 「档案」= 与人有关的事实：参与前筛查、Mission 信息（可编辑）、进阶决策历史。
  */
 import { useState } from 'react'
-import type { BodyMetric, Program, Session } from '../core/types'
+import type { BodyMetric, Decision, Evidence, Mission, Program, Session, UserChoice } from '../core/types'
 import { EXERCISES_BY_ID } from '../data/exercises'
 import { uid } from '../store/usePath'
 import { bestTopSetOf, capacityOf, capacityTrend, recordedSetsOf } from '../core/stats'
@@ -12,10 +13,25 @@ interface Props {
   sessions: Session[]
   programs: Program[]
   bodyMetrics: BodyMetric[]
+  mission: Mission
+  evidences: Evidence[]
+  decisions: Decision[]
   onSaveBodyMetric: (b: BodyMetric) => void
+  onSaveMission: (m: Mission) => void
 }
 
-type SubTab = 'sessions' | 'body' | 'best'
+type SubTab = 'sessions' | 'body' | 'best' | 'profile'
+
+const GOAL_OPTIONS = ['减脂', '增肌', '塑形', '体能', '更健康的感觉']
+const CAUTION_OPTIONS = ['无', '膝', '腰', '肩', '其他']
+
+const CHOICE_LABEL: Record<UserChoice, string> = {
+  accepted: '已采用',
+  modified: '已修改',
+  declined: '不采用',
+  paused: '暂停',
+  deferred: '下次再说',
+}
 
 /** 体重趋势迷你折线（纯 SVG，画报风格） */
 function WeightSparkline({ points }: { points: number[] }) {
@@ -39,7 +55,7 @@ function WeightSparkline({ points }: { points: number[] }) {
   )
 }
 
-export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: Props) {
+export function Records({ sessions, programs, bodyMetrics, mission, evidences, decisions, onSaveBodyMetric, onSaveMission }: Props) {
   const [tab, setTab] = useState<SubTab>('sessions')
   const [weight, setWeight] = useState('')
   const [waist, setWaist] = useState('')
@@ -74,7 +90,7 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
     setWeight(''); setWaist(''); setHip(''); setBodyFat('')
   }
 
-  if (sessions.length === 0 && bodyMetrics.length === 0) {
+  if (sessions.length === 0 && bodyMetrics.length === 0 && evidences.length === 0) {
     return (
       <div className="records">
         <header className="page-head">
@@ -113,7 +129,7 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
       </section>
 
       <nav className="subtabs">
-        {([['sessions', '训练'], ['body', '身体'], ['best', '最佳']] as Array<[SubTab, string]>).map(([key, label]) => (
+        {([['sessions', '训练'], ['body', '身体'], ['best', '最佳'], ['profile', '档案']] as Array<[SubTab, string]>).map(([key, label]) => (
           <button
             key={key}
             type="button"
@@ -125,6 +141,15 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
           </button>
         ))}
       </nav>
+
+      {tab === 'profile' && (
+        <ProfileTab
+          mission={mission}
+          evidences={evidences}
+          decisions={decisions}
+          onSaveMission={onSaveMission}
+        />
+      )}
 
       {tab === 'body' && (
         <section className="tab-panel">
@@ -229,6 +254,144 @@ export function Records({ sessions, programs, bodyMetrics, onSaveBodyMetric }: P
 
 function variantLabel(v: Session['selectedVariant']): string {
   return v === 'full' ? '完整' : v === 'short' ? '短版' : v === 'recovery' ? '恢复' : '自由'
+}
+
+/** 档案 tab：筛查事实 + Mission 信息编辑 + 进阶决策历史 */
+function ProfileTab({
+  mission,
+  evidences,
+  decisions,
+  onSaveMission,
+}: {
+  mission: Mission
+  evidences: Evidence[]
+  decisions: Decision[]
+  onSaveMission: (m: Mission) => void
+}) {
+  const screening = evidences.find((e) => e.kind === 'screening')
+  const [editing, setEditing] = useState(false)
+  const [goal, setGoal] = useState<string | undefined>(mission.goal)
+  const [weeklyTarget, setWeeklyTarget] = useState<number | undefined>(mission.weeklyTarget)
+  const [cautionAreas, setCautionAreas] = useState<string[]>(mission.cautionAreas ?? [])
+
+  const toggleCaution = (c: string) => {
+    if (c === '无') {
+      setCautionAreas(['无'])
+      return
+    }
+    setCautionAreas((prev) => prev.filter((x) => x !== '无').includes(c)
+      ? prev.filter((x) => x !== c)
+      : [...prev.filter((x) => x !== '无'), c])
+  }
+
+  const save = () => {
+    onSaveMission({
+      ...mission,
+      goal,
+      weeklyTarget,
+      cautionAreas: cautionAreas.filter((c) => c !== '无'),
+    })
+    setEditing(false)
+  }
+
+  return (
+    <section className="tab-panel">
+      <div>
+        <p className="label">参与前筛查</p>
+        {screening === undefined ? (
+          <p className="body">还没做过筛查。「重新选择路径」回到入口时会先出现一次（7 问，约半分钟）。</p>
+        ) : (
+          <p className="body">
+            {new Date(screening.recordedAt).toLocaleDateString('zh-CN')} · {screening.statement}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <p className="label">Mission 信息</p>
+        <p className="body">
+          {mission.title}
+          {mission.goal !== undefined && ` · 目标：${mission.goal}`}
+          {mission.weeklyTarget !== undefined && ` · 想练 ${mission.weeklyTarget} 次/周`}
+          {(mission.cautionAreas ?? []).length > 0 && ` · 注意：${mission.cautionAreas!.join('、')}`}
+        </p>
+        {editing ? (
+          <div className="mission-edit">
+            <div>
+              <p className="label">主要目标</p>
+              <div className="chips">
+                {GOAL_OPTIONS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    className={goal === g ? 'chip selected' : 'chip'}
+                    aria-pressed={goal === g}
+                    onClick={() => setGoal(goal === g ? undefined : g)}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="label">每周想练几次</p>
+              <div className="chips">
+                {[1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={weeklyTarget === n ? 'chip selected' : 'chip'}
+                    aria-pressed={weeklyTarget === n}
+                    onClick={() => setWeeklyTarget(weeklyTarget === n ? undefined : n)}
+                  >
+                    {n} 次
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="label">有需要注意的部位吗</p>
+              <div className="chips">
+                {CAUTION_OPTIONS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={cautionAreas.includes(c) ? 'chip selected' : 'chip'}
+                    aria-pressed={cautionAreas.includes(c)}
+                    onClick={() => toggleCaution(c)}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="entry-actions">
+              <button type="button" className="primary small" onClick={save}>保存</button>
+              <button type="button" className="ghost small" onClick={() => setEditing(false)}>取消</button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="ghost small" onClick={() => setEditing(true)}>编辑</button>
+        )}
+      </div>
+
+      <div>
+        <p className="label">进阶决策</p>
+        {decisions.length === 0 ? (
+          <p className="body">还没有决策记录。练完出现「进阶候选」时，你的每次选择都会记在这里。</p>
+        ) : (
+          <ul className="plain-list">
+            {decisions.map((d) => (
+              <li key={d.id}>
+                {new Date(d.createdAt).toLocaleDateString('zh-CN')} · {CHOICE_LABEL[d.userChoice ?? 'deferred']}
+                <span className="meta"> · {d.explanation}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  )
 }
 
 function outcomeLabel(o: Session['outcome']): string {
