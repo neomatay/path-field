@@ -5,6 +5,8 @@
 import type { Mission, Program, Session } from '../core/types'
 import { EXERCISES_BY_ID } from '../data/exercises'
 import { ACHIEVEMENTS, achievementsOf, weekStreak } from '../core/stats'
+import { MANIFEST, RULES_BY_ID, SOURCES_BY_ID } from '../knowledge'
+import type { EvidenceLevel } from '../knowledge'
 import { ParkArt } from './ParkArt'
 
 interface Props {
@@ -20,6 +22,23 @@ interface Props {
 const MISSION_TARGET = 8
 /** 营地印章位置：第 4 次与第 8 次 */
 const CAMPS = [4 / MISSION_TARGET, 1]
+
+/** 「设计依据」展示的规则：计划与课表设计相关的核心条目（数据驱动，改知识库即改这里） */
+const RATIONALE_RULE_IDS = [
+  'KB-PLAN-01', // 低频有效剂量
+  'KB-PLAN-04', // 每肌群 2-3 次/周
+  'KB-SESSION-01', // 复合在前
+  'KB-SESSION-04', // 每课含下肢+推+拉
+  'KB-PROG-01', // 双进阶 RPE 门控
+  'KB-PROG-02', // 增量分档
+] as const
+
+const EVIDENCE_LABEL: Record<EvidenceLevel, string> = {
+  strong: '强证据',
+  moderate: '中等',
+  weak: '弱',
+  inferred: '推断',
+}
 
 export function Journey({ mission, program, sessions, programs, sessionsDone }: Props) {
   const reviewDate = new Date(mission.reviewDate).toLocaleDateString('zh-CN')
@@ -99,6 +118,26 @@ export function Journey({ mission, program, sessions, programs, sessionsDone }: 
               </ul>
             </div>
           ))}
+
+          <div>
+            <p className="label">设计依据</p>
+            <ul className="kb-list">
+              {RATIONALE_RULE_IDS.map((id) => {
+                const rule = RULES_BY_ID[id]
+                if (rule === undefined) return null
+                const cited = rule.sources
+                  .map((sid) => SOURCES_BY_ID[sid]?.citation ?? sid)
+                  .join('；')
+                return (
+                  <li key={id} className="kb-item" title={cited}>
+                    <span className={`kb-badge ${rule.evidence}`}>{EVIDENCE_LABEL[rule.evidence]}</span>
+                    <span className="kb-text">{rule.statement}</span>
+                  </li>
+                )
+              })}
+            </ul>
+            <p className="meta">依据与出处：知识库 v{MANIFEST.kbVersion}（{MANIFEST.createdAt} 落库）。</p>
+          </div>
         </div>
       </details>
 

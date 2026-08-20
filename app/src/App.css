@@ -211,6 +211,57 @@
   font-weight: 700;
 }
 
+/* 退阶变体（更简单）：虚线边 + 后缀文字，暗示这是降档选项 */
+.chip.easier {
+  border-style: dashed;
+}
+
+/* 知识库「设计依据」列表：证据徽章 + 规则陈述 */
+.kb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.kb-item {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.kb-badge {
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 1px 6px;
+  border: 1px solid rgba(28, 42, 35, 0.4);
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.kb-badge.strong {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--paper);
+}
+
+.kb-badge.moderate {
+  background: rgba(32, 90, 62, 0.16);
+}
+
+.kb-badge.weak,
+.kb-badge.inferred {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
 /* ---------- 安全提示 ---------- */
 
 .safety {
@@ -219,6 +270,66 @@
   border-radius: 0 0 8px 8px;
   background: rgba(190, 96, 56, 0.08);
   font-size: 14px;
+}
+
+/* ---------- PAR-Q+ 入门筛查 ---------- */
+
+.parq {
+  padding: 18px 16px;
+  border: 1px solid rgba(28, 42, 35, 0.25);
+  border-radius: 10px;
+  background: var(--paper);
+}
+
+.parq-list {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  counter-reset: parq-q;
+}
+
+.parq-item {
+  padding: 12px;
+  border: 1px solid rgba(28, 42, 35, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.parq-item::before {
+  counter-increment: parq-q;
+  content: counter(parq-q, decimal-leading-zero);
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--fir);
+  opacity: 0.8;
+}
+
+.parq-q {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.parq-options {
+  display: flex;
+  gap: 8px;
+}
+
+.parq-note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--sun);
+  background: rgba(236, 169, 61, 0.1);
+  border-radius: 0 8px 8px 0;
+  font-size: 13.5px;
+  line-height: 1.6;
 }
 
 .safety.urgent {

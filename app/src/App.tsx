@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { downloadSnapshot, exportSnapshot } from './store/db'
-import { usePath, type OnboardingAnswers } from './store/usePath'
+import { usePath, uid, type OnboardingAnswers } from './store/usePath'
 import type { ProgramTemplate } from './data/templates'
 import type { Session } from './core/types'
 import { weekStreak } from './core/stats'
@@ -10,6 +10,7 @@ import { Training } from './ui/Training'
 import { Receipt } from './ui/Receipt'
 import { Journey } from './ui/Journey'
 import { Records } from './ui/Records'
+import { Parq } from './ui/Parq'
 import { ChartIcon, PeaksIcon, SunIcon } from './ui/icons'
 
 type Screen = 'today' | 'journey' | 'records' | 'training' | 'receipt'
@@ -41,7 +42,7 @@ function App() {
   const {
     loaded, activeMission, activeProgram, nextPlannedSessionId, sessions, programs,
     programSessions, missions, bodyMetrics, templateChoices, startWithTemplate,
-    archiveActivePlan, saveSession, saveBodyMetric,
+    archiveActivePlan, saveSession, saveBodyMetric, evidences, saveEvidence,
   } = usePath()
   const [screen, setScreenState] = useState<Screen>(screenFromHash)
 
@@ -71,6 +72,27 @@ function App() {
 
   if (!loaded) {
     return <div className="app"><p className="body">加载本地数据…</p></div>
+  }
+
+  /** PAR-Q+ 一次性筛查（KB-ASSESS-01）：做过一次就不再出现 */
+  const parqDone = evidences.some((e) => e.kind === 'screening')
+  const saveParq = (answers: boolean[]) => {
+    const positives = answers.filter((v) => v).length
+    void saveEvidence({
+      id: uid(),
+      kind: 'screening',
+      classification: 'fact',
+      statement:
+        positives === 0
+          ? '参与前筛查（PAR-Q+）：7 项均为「否」。'
+          : `参与前筛查（PAR-Q+）：${positives} 项「是」，已建议咨询医生，未拦截训练。`,
+      value: positives,
+      unit: '项',
+      recordedAt: new Date().toISOString(),
+      sourceRecordIds: [],
+      confidence: 'direct',
+      scope: 'mission',
+    })
   }
 
   // ---------- 入口：选路径 -> 三个快问 -> 看完整计划再开始 ----------
@@ -136,7 +158,11 @@ function App() {
           <span className="label">v0.2 M2</span>
         </header>
         <main className="stage">
-          <section className="mission entry-hero">
+          {!parqDone ? (
+            <Parq onSubmit={(answers) => saveParq(answers)} />
+          ) : (
+            <>
+              <section className="mission entry-hero">
             <p className="label">从这里开始</p>
             <h1>先看清整份计划，<br />再决定今天练什么</h1>
             <p className="body">选一个起点，先看完整计划再开始。</p>
@@ -159,6 +185,8 @@ function App() {
             随时可换路径，记录不删。
             {hasHistory ? '之前的记录都还在「记录」里。' : ''}
           </p>
+            </>
+          )}
         </main>
       </div>
     )

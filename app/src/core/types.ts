@@ -17,7 +17,9 @@ export type EvidenceKind =
   | 'trainingPerformance'
   | 'bodyObservation'
   | 'subjectiveExperience'
-  | 'lifeContext';
+  | 'lifeContext'
+  /** 参与前一次性筛查（PAR-Q+，KB-ASSESS-01） */
+  | 'screening';
 
 export type EvidenceConfidence = 'direct' | 'limited' | 'insufficient';
 

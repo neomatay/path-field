@@ -171,14 +171,35 @@ describe('周复盘', () => {
     expect(groups).toHaveLength(0);
   });
 
-  it('达到区间上限且难度未升 -> 候选 +2.5kg，不自动生效', () => {
-    const candidates = buildProgressionCandidates(
+  it('达到区间上限且难度未升 -> 按动作增量策略给候选，不自动生效', () => {
+    // bench-press：杠铃，KB-PROG-02 分档 +2.5kg
+    const barbell = buildProgressionCandidates(
+      [sessionWithBlock('s1', 6, 'bench-press', 60, 12, 8), sessionWithBlock('s2', 2, 'bench-press', 60, 12, 8)],
+      { 'bench-press': { maxReps: 12 } },
+    );
+    expect(barbell).toHaveLength(1);
+    expect(barbell[0].incrementMode).toBe('weight');
+    expect(barbell[0].candidateWeightKg).toBe(62.5);
+    expect(barbell[0].reason).toContain('由你决定');
+
+    // leg-press：器械，升配重格而非固定公斤数
+    const machine = buildProgressionCandidates(
       [sessionWithBlock('s1', 6, 'leg-press', 80, 12, 8), sessionWithBlock('s2', 2, 'leg-press', 80, 12, 8)],
       { 'leg-press': { maxReps: 12 } },
     );
-    expect(candidates).toHaveLength(1);
-    expect(candidates[0].candidateWeightKg).toBe(82.5);
-    expect(candidates[0].reason).toContain('由你决定');
+    expect(machine).toHaveLength(1);
+    expect(machine[0].incrementMode).toBe('nextPlate');
+    expect(machine[0].candidateWeightKg).toBeUndefined();
+    expect(machine[0].reason).toContain('下一格');
+
+    // pull-up：自重，次数进阶
+    const bodyweight = buildProgressionCandidates(
+      [sessionWithBlock('s1', 6, 'pull-up', 0, 8, 8), sessionWithBlock('s2', 2, 'pull-up', 0, 8, 8)],
+      { 'pull-up': { maxReps: 8 } },
+    );
+    expect(bodyweight).toHaveLength(1);
+    expect(bodyweight[0].incrementMode).toBe('repsOnly');
+    expect(bodyweight[0].reason).toContain('次数进阶');
   });
 });
 

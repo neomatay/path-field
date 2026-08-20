@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from 'react'
 import type { ActualBlock, DiscomfortLevel, Program, Session } from '../core/types'
-import { EXERCISES_BY_ID, lastPerformance, substitutionsFor } from '../data/exercises'
+import { EXERCISES_BY_ID, lastPerformance, regressionsFor, substitutionsFor } from '../data/exercises'
 
 interface Props {
   program: Program
@@ -124,6 +124,8 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
           const originalId = block.substitutedWithExerciseId
           const last = lastPerformance(block.exerciseId, history)
           const subs = substitutionsFor(block.exerciseId)
+          // 退阶链（regressionsFor）：同组里难度更低的变体，标出来方便状态差时降档
+          const easierIds = new Set(regressionsFor(block.exerciseId).map((r) => r.id))
           return (
             <section key={bi} className={block.skipped ? 'block skipped' : 'block'}>
               <div className="block-head">
@@ -192,10 +194,10 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
                         <button
                           key={sub.id}
                           type="button"
-                          className="chip"
+                          className={easierIds.has(sub.id) ? 'chip easier' : 'chip'}
                           onClick={() => substitute(bi, sub.id)}
                         >
-                          {sub.name} · {sub.equipment}
+                          {sub.name} · {sub.equipment}{easierIds.has(sub.id) ? ' · 更简单' : ''}
                         </button>
                       ))}
                     </div>

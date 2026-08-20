@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getAll, put } from './db'
 import { TEMPLATES, instantiateProgram, type ProgramTemplate } from '../data/templates'
-import type { BodyMetric, Mission, Program, Session } from '../core/types'
+import type { BodyMetric, Evidence, Mission, Program, Session } from '../core/types'
 
 /** 入口追问的答案（可选填，跳过也允许） */
 export interface OnboardingAnswers {
@@ -49,20 +49,23 @@ export function usePath() {
   const [programs, setPrograms] = useState<Program[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
   const [bodyMetrics, setBodyMetrics] = useState<BodyMetric[]>([])
+  const [evidences, setEvidences] = useState<Evidence[]>([])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     void (async () => {
-      const [m, p, s, b] = await Promise.all([
+      const [m, p, s, b, e] = await Promise.all([
         getAll<Mission>('missions'),
         getAll<Program>('programs'),
         getAll<Session>('sessions'),
         getAll<BodyMetric>('bodyMetrics'),
+        getAll<Evidence>('evidence'),
       ])
       setMissions(m.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)))
       setPrograms(p)
       setSessions(s.sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt)))
       setBodyMetrics(b.sort((a, b) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt)))
+      setEvidences(e.sort((a, b) => Date.parse(b.recordedAt) - Date.parse(a.recordedAt)))
       setLoaded(true)
     })()
   }, [])
@@ -126,6 +129,14 @@ export function usePath() {
     ))
   }, [])
 
+  /** 落库一条证据（如 PAR-Q+ 筛查结果），事实只增不改 */
+  const saveEvidence = useCallback(async (e: Evidence) => {
+    await put('evidence', e)
+    setEvidences((prev) => [e, ...prev.filter((x) => x.id !== e.id)].sort(
+      (a, b) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt),
+    ))
+  }, [])
+
   /** 下一次计划训练：按当前计划的完成次数轮换模板内的 session */
   const nextPlannedSessionId =
     activeProgram === undefined || activeProgram.sessions.length === 0
@@ -149,6 +160,7 @@ export function usePath() {
     programs,
     sessions,
     bodyMetrics,
+    evidences,
     programSessions,
     activeMission,
     activeProgram,
@@ -158,5 +170,6 @@ export function usePath() {
     archiveActivePlan,
     saveSession,
     saveBodyMetric,
+    saveEvidence,
   }
 }

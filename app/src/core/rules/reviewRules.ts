@@ -6,10 +6,11 @@
  *                       -> 可陈述"相近条件下表现稳定/变化"；不得宣称整体能力提升
  * REVIEW-BOUNDARY-04    体重/围度/照片缺失或与训练信号不一致 -> 标明不能单独解释效果
  *
- * 进阶规则（ROADMAP 第 6.5 条，最简版）：
- * 同 RPE 档下完成目标区间上限 -> 候选小幅加重（+2.5kg），需 Decision 确认。
+ * 进阶规则（ROADMAP 第 6.5 条 + KB-PROG-02）：
+ * 同 RPE 档下完成目标区间上限 -> 按动作的增量策略给候选（分档加重 / 升配重格 / 次数进阶），需 Decision 确认。
  */
 import type { ActualBlock, Session } from '../types';
+import { EXERCISES_BY_ID } from '../../data/exercises';
 
 export interface ComparableGroup {
   exerciseId: string;
@@ -91,7 +92,7 @@ export function evaluateWeeklyReview(
     ],
     options: [
       { id: 'maintain', label: '维持，继续采集', effect: '最大化证据连续性。' },
-      { id: 'small-progress', label: '下次尝试小范围渐进', effect: '仅对一项关键动作尝试小幅调整（如 +2.5kg），继续记录 RPE 与不适。' },
+      { id: 'small-progress', label: '下次尝试小范围渐进', effect: '仅对一项关键动作尝试小幅调整（按器械档位加重或多做 1-2 次），继续记录 RPE 与不适。' },
       { id: 'recover', label: '恢复一周', effect: '主动降载，不清零。' },
     ],
   };
@@ -154,12 +155,22 @@ function trend(g: ComparableGroup): string {
 export interface ProgressionCandidate {
   exerciseId: string;
   fromWeightKg: number;
-  candidateWeightKg: number;
+  /** 增量策略（KB-PROG-02）：weight 给出候选重量；nextPlate / repsOnly 只给方向 */
+  incrementMode: 'weight' | 'nextPlate' | 'repsOnly';
+  /** 仅 incrementMode=weight 时有值 */
+  candidateWeightKg?: number;
   reason: string;
 }
 
+/** KB-PROG-02：增量按器械档位。数据缺省时退回保守的 +2.5kg 惯例。 */
+function incrementOf(exerciseId: string): { mode: 'weight' | 'nextPlate' | 'repsOnly'; kg?: number } {
+  const inc = EXERCISES_BY_ID[exerciseId]?.loadIncrement
+  if (inc === undefined) return { mode: 'weight', kg: 2.5 }
+  return inc
+}
+
 /**
- * 同 RPE 档下，最近一次在目标区间上限完成 -> 候选 +2.5kg。
+ * 同 RPE 档下，最近一次在目标区间上限完成 -> 按增量策略给候选。
  * 只产生候选，不直接生效。
  */
 export function buildProgressionCandidates(
@@ -173,12 +184,32 @@ export function buildProgressionCandidates(
     const target = targets[g.exerciseId];
     if (!target || last.weightKg === undefined) continue;
     if ((last.reps ?? 0) >= target.maxReps && band(last.rpe) === band(g.entries[0].rpe)) {
-      out.push({
-        exerciseId: g.exerciseId,
-        fromWeightKg: last.weightKg,
-        candidateWeightKg: round(last.weightKg + 2.5),
-        reason: `最近一次以目标区间上限（${last.reps} 次）完成 ${last.weightKg}kg，且主观难度未上升。候选下次 +2.5kg；是否采用由你决定。`,
-      });
+      const inc = incrementOf(g.exerciseId)
+      const base = `最近一次以目标区间上限（${last.reps} 次）完成 ${last.weightKg}kg，且主观难度未上升`
+      if (inc.mode === 'weight') {
+        const kg = inc.kg ?? 2.5
+        out.push({
+          exerciseId: g.exerciseId,
+          fromWeightKg: last.weightKg,
+          incrementMode: 'weight',
+          candidateWeightKg: round(last.weightKg + kg),
+          reason: `${base}。候选下次 +${kg}kg（到 ${round(last.weightKg + kg)}kg）；是否采用由你决定。`,
+        })
+      } else if (inc.mode === 'nextPlate') {
+        out.push({
+          exerciseId: g.exerciseId,
+          fromWeightKg: last.weightKg,
+          incrementMode: 'nextPlate',
+          reason: `${base}。候选下次升一档配重（器械/哑铃取下一格，不必精确到公斤数）；是否采用由你决定。`,
+        })
+      } else {
+        out.push({
+          exerciseId: g.exerciseId,
+          fromWeightKg: last.weightKg,
+          incrementMode: 'repsOnly',
+          reason: `${base}。候选下次同重量多做 1-2 次（次数进阶，重量不变）；是否采用由你决定。`,
+        })
+      }
     }
   }
   return out;

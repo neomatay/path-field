@@ -117,7 +117,8 @@
       "type": "interpretation",
       "evidence": "strong",
       "sources": ["warburton-2011", "acsm-getp"],
-      "statement": "PAR-Q+ 是参与前筛查工具，入门执行一次；阳性项建议咨询医生后再开始完整版。当次签到管当日状态，两者不重叠。"
+      "statement": "PAR-Q+ 是参与前筛查工具，入门执行一次；阳性项建议咨询医生后再开始完整版。当次签到管当日状态，两者不重叠。",
+      "implementedIn": ["ui/Parq.tsx（入门筛查屏）"]
     },
     {
       "id": "KB-ASSESS-02",
