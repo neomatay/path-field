@@ -17,6 +17,8 @@ export interface ExerciseGuide extends Exercise {
   difficulty?: 1 | 2 | 3;
   /** 进阶加重策略（KB-PROG-02，实践惯例）：weight=固定公斤数 / nextPlate=器械哑铃下一格 / repsOnly=以次数进阶为主 */
   loadIncrement?: { mode: 'weight'; kg: number } | { mode: 'nextPlate' } | { mode: 'repsOnly' };
+  /** 组间歇秒数覆盖（KB-REST-01/02）；缺省按动作组判定：复合 120s / 孤立 90s */
+  restSeconds?: number;
 }
 
 export const EXERCISES: ExerciseGuide[] = [
@@ -275,6 +277,20 @@ export function regressionsFor(exerciseId: string): ExerciseGuide[] {
   return EXERCISES.filter(
     (e) => e.substitutionGroupId === base.substitutionGroupId && (e.difficulty ?? 3) < level,
   );
+}
+
+/** 复合动作组（多关节主项）：组间歇取 2 分钟档（KB-REST-01）；孤立/小肌群 90 秒（KB-REST-02 惯例） */
+const COMPOUND_GROUPS = new Set([
+  'quad-push', 'hip-hinge-glute', 'single-leg', 'chest-press',
+  'incline-press', 'vertical-push', 'vertical-pull', 'horizontal-pull',
+]);
+
+/** 组间歇默认秒数：个别动作可用 restSeconds 覆盖，否则按复合/孤立判定 */
+export function restSecondsOf(exerciseId: string): number {
+  const e = EXERCISES_BY_ID[exerciseId];
+  if (e === undefined) return 90;
+  if (e.restSeconds !== undefined) return e.restSeconds;
+  return COMPOUND_GROUPS.has(e.substitutionGroupId) ? 120 : 90;
 }
 
 /** 从历史会话中找该动作上次同条件最佳组（重量 x 次数 @RPE） */

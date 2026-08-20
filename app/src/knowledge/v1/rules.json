@@ -217,6 +217,24 @@
       "evidence": "weak",
       "sources": [],
       "statement": "同一动作连续 3-4 次未触发进阶 -> 换同组变体或调整次数区间，不硬加重量。哑铃/器械档位不连续时，次数区间上端放宽至 15。"
+    },
+    {
+      "id": "KB-REST-01",
+      "domain": "session-design",
+      "type": "fact",
+      "evidence": "moderate",
+      "sources": ["schoenfeld-2016-rest", "grgic-2018-rest"],
+      "statement": "复合动作组间休息 2-3 分钟比 1 分钟能保住更多每组次数与整课容量；8 周试验中 3 分钟组肥大与力量增益也更高。长间歇的代价是时间。",
+      "implementedIn": ["ui/Training.tsx（组间歇倒计时默认时长）", "data/exercises.ts（restSeconds 字段）"]
+    },
+    {
+      "id": "KB-REST-02",
+      "domain": "session-design",
+      "type": "convention",
+      "evidence": "inferred",
+      "sources": ["nsca-essentials"],
+      "statement": "孤立/小肌群动作组间休息 60-90 秒（行业惯例，直接证据少）。时间紧张时压缩间歇是可接受的取舍：牺牲部分容量，优先保证到场。",
+      "implementedIn": ["ui/Training.tsx（组间歇倒计时默认时长）"]
     }
   ]
 }

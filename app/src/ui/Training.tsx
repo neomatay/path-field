@@ -5,10 +5,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import type { ActualBlock, DiscomfortLevel, Program, Session } from '../core/types'
-import { EXERCISES_BY_ID, lastPerformance, regressionsFor, substitutionsFor } from '../data/exercises'
-
-/** 组间歇默认 90 秒（惯例值，非证据结论）；可加 30 秒或直接跳过 */
-const REST_SECONDS = 90
+import { EXERCISES_BY_ID, lastPerformance, regressionsFor, restSecondsOf, substitutionsFor } from '../data/exercises'
 
 function fmtClock(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000))
@@ -89,11 +86,11 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
     )
   }
 
-  /** 勾选完成一组：记录完成时间并启动组间歇；再点取消勾选 */
+  /** 勾选完成一组：记录完成时间并按动作启动组间歇（复合 120s / 孤立 90s，KB-REST-01/02）；再点取消勾选 */
   const toggleDone = (bi: number, si: number) => {
     const wasDone = blocks[bi]?.sets[si]?.doneAt !== undefined
     if (!wasDone) {
-      setRestUntil(Date.now() + REST_SECONDS * 1000)
+      setRestUntil(Date.now() + restSecondsOf(blocks[bi].exerciseId) * 1000)
       setRestNotified(false)
     }
     setBlocks((prev) =>

@@ -86,6 +86,18 @@
       "citation": "Schwanbeck S, et al. 自由重量 vs 器械 meta 分析. 2020.",
       "verification": "unverified-detail",
       "note": "结论方向（肥大相近、自由重量力量迁移略优）可靠；期刊细节未核实。"
+    },
+    {
+      "id": "schoenfeld-2016-rest",
+      "kind": "rct",
+      "citation": "Schoenfeld BJ, et al. Longer interset rest periods augment muscle hypertrophy and strength gains in resistance-trained men. J Strength Cond Res. 2016;30(7):1805-1812.",
+      "verification": "verified"
+    },
+    {
+      "id": "grgic-2018-rest",
+      "kind": "meta-analysis",
+      "citation": "Grgic J, et al. Effects of rest intervals on muscle hypertrophy in resistance training with volume equated: a systematic review and meta-analysis. Sports Med. 2018 — acute studies supplementary; strength meta Grgic 2018.",
+      "verification": "unverified-detail"
     }
   ]
 }

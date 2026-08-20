@@ -4,7 +4,7 @@ import { evaluateVariant } from './variant';
 import { evaluateReturn } from './returnRules';
 import { buildComparableGroups, buildProgressionCandidates, evaluateWeeklyReview, maxRepsTargetsOf } from './reviewRules';
 import type { ActualBlock, Session } from '../types';
-import { EXERCISES, substitutionsFor } from '../../data/exercises';
+import { EXERCISES, restSecondsOf, substitutionsFor } from '../../data/exercises';
 import { TEMPLATES, instantiateProgram } from '../../data/templates';
 
 // ---------- SAFE ----------
@@ -215,6 +215,20 @@ describe('周复盘', () => {
     // "8-12" 取 12，"10-12" 取 12
     expect(targets['goblet-squat'].maxReps).toBe(12);
     expect(targets['seated-row'].maxReps).toBe(12);
+  });
+
+  it('组间歇按复合/孤立分档（KB-REST-01/02）：复合 120s、孤立 90s', () => {
+    // 复合多关节主项
+    expect(restSecondsOf('bench-press')).toBe(120);
+    expect(restSecondsOf('goblet-squat')).toBe(120);
+    expect(restSecondsOf('seated-row')).toBe(120);
+    expect(restSecondsOf('pull-up')).toBe(120);
+    // 孤立 / 小肌群
+    expect(restSecondsOf('lateral-raise')).toBe(90);
+    expect(restSecondsOf('db-curl')).toBe(90);
+    expect(restSecondsOf('plank')).toBe(90);
+    // 未知动作退回 90s（保守）
+    expect(restSecondsOf('does-not-exist')).toBe(90);
   });
 });
 
