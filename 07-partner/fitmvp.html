@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitJourney MVP 交互原型 V2</title>
+<style>
+:root{
+  --primary:#6C5CE7;--primary-light:#A29BFE;--primary-dark:#5A4BD1;
+  --accent:#00E676;--accent-dark:#00C853;
+  --orange:#FF6B35;--pink:#FF6B9D;--gold:#FFD700;
+  --bg:#F0F0F5;--card:#FFFFFF;
+  --text:#2D3436;--text-light:#636E72;--text-muted:#B2BEC3;
+  --radius:16px;--shadow:0 4px 20px rgba(0,0,0,.06);
+  --map-grass:#A8E6A1;--map-forest:#6BBF59;--map-mountain:#B8C6DB;--map-coast:#7DD3F8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;
+  background:linear-gradient(135deg,#e8eaf6 0%,#f3e5f5 50%,#fce4ec 100%);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:20px;color:var(--text);
+}
+.phone{
+  width:375px;height:750px;background:var(--bg);
+  border-radius:44px;overflow:hidden;position:relative;
+  box-shadow:0 0 0 12px #1a1a2e,0 20px 60px rgba(0,0,0,.3);
+}
+.screen{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  display:none;flex-direction:column;background:var(--bg);
+  animation:slideIn .3s ease;
+}
+.screen.active{display:flex}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:12px;font-weight:600;flex-shrink:0}
+.statusbar .right{display:flex;gap:5px;align-items:center;font-size:10px}
+.navbar{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:var(--bg)}
+.navbar .back{font-size:20px;color:var(--primary);cursor:pointer;width:30px}
+.navbar .title{font-size:16px;font-weight:700}
+.navbar .placeholder{width:30px}
+.tabbar{height:64px;background:var(--card);display:flex;align-items:center;justify-content:space-around;flex-shrink:0;box-shadow:0 -2px 12px rgba(0,0,0,.05);border-top:1px solid #eee}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--text-muted);font-size:10px;font-weight:500;transition:color .2s}
+.tab.active{color:var(--primary)}
+.tab .icon{font-size:22px}
+.content{flex:1;overflow-y:auto;padding:0 16px 16px}
+.btn{width:100%;height:52px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--primary),var(--primary-light));transition:transform .15s,box-shadow .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:active{transform:scale(.97)}
+.btn-accent{background:linear-gradient(135deg,var(--accent-dark),var(--accent))}
+.btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary)}
+.btn-small{height:40px;font-size:14px;width:auto;padding:0 20px}
+.screen::-webkit-scrollbar,.content::-webkit-scrollbar,.map-scroll::-webkit-scrollbar{width:0}
+
+/* ====== ONBOARDING ====== */
+.onboard-hero{text-align:center;padding:20px 0 16px}
+.onboard-hero .logo{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--primary),var(--pink));display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;box-shadow:0 8px 24px rgba(108,92,231,.3)}
+.onboard-hero h1{font-size:24px;font-weight:800}
+.onboard-hero p{font-size:13px;color:var(--text-light);margin-top:6px}
+.progress-dots{display:flex;gap:8px;justify-content:center;padding:8px 0 16px}
+.progress-dots span{width:8px;height:8px;border-radius:50%;background:#ddd;transition:all .3s}
+.progress-dots span.active{width:24px;border-radius:4px;background:var(--primary)}
+.q-card{background:var(--card);border-radius:var(--radius);padding:24px 20px;box-shadow:var(--shadow);margin-bottom:16px;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+.q-card .q-label{font-size:12px;color:var(--primary);font-weight:700;margin-bottom:8px}
+.q-card .q-title{font-size:18px;font-weight:700;margin-bottom:20px;line-height:1.4}
+.q-options{display:flex;flex-direction:column;gap:10px}
+.q-opt{padding:16px;border:2px solid #eee;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s}
+.q-opt:hover{border-color:var(--primary-light)}
+.q-opt.selected{border-color:var(--primary);background:rgba(108,92,231,.06)}
+.q-opt .opt-icon{font-size:24px}
+.q-opt .opt-text{flex:1}
+.q-opt .opt-title{font-size:15px;font-weight:600}
+.q-opt .opt-desc{font-size:12px;color:var(--text-muted);margin-top:3px}
+.q-opt .check{width:22px;height:22px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:12px;color:#fff}
+.q-opt.selected .check{background:var(--primary);border-color:var(--primary)}
+
+/* ====== PUSH NOTIFICATION ====== */
+.push-notif{
+  position:absolute;top:0;left:0;right:0;z-index:100;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid #eee;padding:12px 16px;
+  display:none;align-items:flex-start;gap:10px;
+  animation:slideDown .4s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:translateY(0)}}
+.push-notif.show{display:flex}
+.push-notif .pn-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--pink));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.push-notif .pn-body{flex:1}
+.push-notif .pn-title{font-size:13px;font-weight:700}
+.push-notif .pn-text{font-size:12px;color:var(--text-light);margin-top:2px;line-height:1.4}
+.push-notif .pn-close{font-size:14px;color:var(--text-muted);cursor:pointer;padding:4px}
+
+/* ====== MODAL / POPUP ====== */
+.modal-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.4);
+  z-index:80;display:none;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.show{display:flex;animation:fadeIn .2s}
+.modal-sheet{
+  background:var(--card);border-radius:24px 24px 0 0;
+  width:100%;max-height:85%;overflow-y:auto;padding:20px;
+  animation:slideUp .35s cubic-bezier(.32,.72,0,1);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-sheet .ms-handle{width:36px;height:4px;border-radius:2px;background:#ddd;margin:0 auto 16px}
+.modal-sheet .ms-title{font-size:17px;font-weight:700;text-align:center;margin-bottom:4px}
+.modal-sheet .ms-sub{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:20px}
+
+/* ====== PLAN GENERATED ====== */
+.plan-hero{background:linear-gradient(135deg,var(--primary),var(--pink));border-radius:var(--radius);padding:24px;color:#fff;margin-bottom:16px;text-align:center}
+.plan-hero .check-circle{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px}
+.plan-hero h2{font-size:20px;font-weight:800}
+.plan-hero .sub{font-size:13px;opacity:.85;margin-top:6px}
+.plan-stat-row{display:flex;gap:12px;margin-bottom:16px}
+.plan-stat{flex:1;background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow)}
+.plan-stat .num{font-size:22px;font-weight:800;color:var(--primary)}
+.plan-stat .label{font-size:11px;color:var(--text-muted);margin-top:3px}
+.section-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.week-plan{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.day-card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
+.day-card.today{border-left:4px solid var(--accent)}
+.day-card.rest{opacity:.7}
+.day-card .day-label{width:36px;text-align:center;flex-shrink:0}
+.day-card .day-label .d-num{font-size:18px;font-weight:800;color:var(--primary)}
+.day-card .day-label .d-name{font-size:10px;color:var(--text-muted)}
+.day-card .day-info{flex:1}
+.day-card .day-info .d-title{font-size:14px;font-weight:600}
+.day-card .day-info .d-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.day-card .day-tag{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
+.tag-strength{background:rgba(108,92,231,.1);color:var(--primary)}
+.tag-cardio{background:rgba(0,230,118,.1);color:var(--accent-dark)}
+.tag-rest{background:rgba(255,107,53,.1);color:var(--orange)}
+
+/* ====== TODAY ====== */
+.today-hero{background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:var(--radius);padding:20px;color:#fff;margin-bottom:16px}
+.today-hero .greeting{font-size:13px;opacity:.85}
+.today-hero .date{font-size:20px;font-weight:800;margin-top:4px}
+.streak-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.2);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;margin-top:10px}
+.today-plan-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;cursor:pointer;transition:transform .15s}
+.today-plan-card:active{transform:scale(.98)}
+.today-plan-card .tp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.today-plan-card .tp-title{font-size:17px;font-weight:700}
+.today-plan-card .tp-tag{font-size:10px;background:rgba(108,92,231,.1);color:var(--primary);padding:3px 10px;border-radius:8px;font-weight:600}
+.exercise-list{display:flex;flex-direction:column;gap:10px}
+.exercise-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:12px}
+.exercise-item .ex-icon{width:40px;height:40px;border-radius:10px;background:rgba(108,92,231,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.exercise-item .ex-info{flex:1}
+.exercise-item .ex-name{font-size:14px;font-weight:600}
+.exercise-item .ex-detail{font-size:11px;color:var(--text-muted);margin-top:2px}
+.exercise-item .ex-time{font-size:11px;color:var(--primary);font-weight:600}
+.map-mini-preview{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px;cursor:pointer;transition:transform .15s}
+.map-mini-preview:active{transform:scale(.98)}
+.map-mini-preview .mm-title{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.map-mini-preview .mm-track{position:relative;height:54px;background:linear-gradient(180deg,#A8E6A1 0%,#A8E6A1 50%,#6BBF59 50%,#6BBF59 100%);border-radius:10px;overflow:hidden}
+.mini-node{position:absolute;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.mini-node.done{background:var(--accent-dark)}
+.mini-node.current{background:var(--gold);animation:pulse 1.5s infinite}
+.mini-node.locked{background:rgba(0,0,0,.2)}
+.map-mini-preview .mm-foot{font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center}
+
+/* ====== CHECK-IN POPUP ====== */
+.ci-item{margin-bottom:20px}
+.ci-item:last-child{margin-bottom:0}
+.ci-label{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ci-value{font-size:13px;color:var(--primary);font-weight:700;margin-left:auto}
+.ci-slider{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:#e0e0e0;outline:none}
+.ci-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--primary);cursor:pointer;box-shadow:0 2px 8px rgba(108,92,231,.4)}
+.ci-slider-emoji{display:flex;justify-content:space-between;margin-top:6px;font-size:11px}
+.ci-mood-row{display:flex;gap:8px;justify-content:space-between}
+.ci-mood{flex:1;text-align:center;padding:12px 4px;border:2px solid #eee;border-radius:12px;cursor:pointer;transition:all .2s}
+.ci-mood.selected{border-color:var(--primary);background:rgba(108,92,231,.05)}
+.ci-mood .emoji{font-size:24px}
+.ci-mood .label{font-size:10px;color:var(--text-muted);margin-top:4px}
+.ci-time-row{display:flex;gap:8px;flex-wrap:wrap}
+.ci-time{flex:1;min-width:60px;text-align:center;padding:10px 4px;border:2px solid #eee;border-radius:12px;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.ci-time.selected{border-color:var(--accent-dark);background:rgba(0,230,118,.06);color:var(--accent-dark)}
+.ci-adjusted{background:rgba(0,230,118,.08);border-radius:12px;padding:14px;display:flex;gap:10px;align-items:flex-start}
+.ci-adjusted .ci-icon{font-size:20px;flex-shrink:0}
+.ci-adjusted .ci-text{font-size:12px;line-height:1.5;color:var(--text-light)}
+.ci-adjusted .ci-text strong{color:var(--accent-dark)}
+.ci-change-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.change-item{font-size:11px;padding:6px 10px;background:rgba(255,255,255,.6);border-radius:8px;color:var(--text-light);display:flex;align-items:center;gap:6px}
+.change-item .arrow{color:var(--primary);font-weight:700}
+.adjusted-banner{background:linear-gradient(135deg,#FFF3E0,#FFE0B2);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#E65100;line-height:1.5}
+.adjusted-banner .ab-icon{font-size:16px;flex-shrink:0}
+.adjusted-banner .ab-changes{font-size:11px;color:#BF360C;margin-top:4px}
+.ci-adjusted{transition:background .3s}
+.ci-adjusted.warning{background:rgba(255,107,53,.1)}
+.ci-adjusted.warning .ci-text strong{color:var(--orange)}
+.ci-adjusted.danger{background:rgba(229,57,53,.08)}
+.ci-adjusted.danger .ci-text strong{color:#E53935}
+
+/* ====== TRAINING MODE ====== */
+.training-header{background:var(--primary);color:#fff;padding:16px;flex-shrink:0}
+.training-header .th-top{display:flex;justify-content:space-between;align-items:center}
+.training-header .th-progress{font-size:12px;opacity:.8}
+.training-header .th-timer{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.progress-bar{height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin-top:10px;overflow:hidden}
+.progress-bar .fill{height:100%;background:#fff;border-radius:2px;transition:width .5s}
+.ex-current{padding:20px 16px;flex:1;overflow-y:auto}
+.ex-current .ex-name-big{font-size:22px;font-weight:800;margin-bottom:4px}
+.ex-current .ex-target{font-size:13px;color:var(--text-light);margin-bottom:16px}
+.ex-demo{width:100%;height:140px;border-radius:var(--radius);background:linear-gradient(135deg,#a29bfe,#6c5ce7);display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:16px;color:rgba(255,255,255,.9)}
+.set-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.set-row{display:flex;align-items:center;gap:10px;padding:12px;background:var(--card);border-radius:12px;box-shadow:var(--shadow)}
+.set-row.done{background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.2)}
+.set-row .set-num{width:28px;height:28px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text-light);flex-shrink:0}
+.set-row.done .set-num{background:var(--accent-dark);color:#fff}
+.set-row .set-input{flex:1;display:flex;gap:8px;align-items:center;justify-content:center}
+.set-row .set-field{text-align:center}
+.set-row .set-field .val{font-size:16px;font-weight:700}
+.set-row .set-field .unit{font-size:11px;color:var(--text-muted)}
+.rpe-row{display:flex;gap:6px;margin-top:12px}
+.rpe-pill{flex:1;text-align:center;padding:8px;border-radius:8px;background:var(--bg);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.rpe-pill.selected{background:var(--orange);color:#fff}
+.rpe-pill:nth-child(1).selected,.rpe-pill:nth-child(2).selected{background:#4CAF50}
+.rpe-pill:nth-child(3).selected,.rpe-pill:nth-child(4).selected{background:#8BC34A}
+.rpe-pill:nth-child(5).selected{background:#FFC107;color:#333}
+
+/* ====== SUMMARY ====== */
+.summary-hero{background:linear-gradient(135deg,var(--accent-dark),var(--accent));border-radius:var(--radius);padding:28px 20px;color:#fff;text-align:center;margin-bottom:16px}
+.summary-hero .celebrate{font-size:48px;margin-bottom:8px;animation:bounce 1s ease infinite}
+.summary-hero h2{font-size:22px;font-weight:800}
+.summary-hero .sub{font-size:13px;opacity:.85;margin-top:6px}
+.summary-stats{display:flex;gap:12px;margin-bottom:16px}
+.sum-stat{flex:1;background:var(--card);border-radius:12px;padding:16px 10px;text-align:center;box-shadow:var(--shadow)}
+.sum-stat .num{font-size:20px;font-weight:800}
+.sum-stat .num.up{color:var(--accent-dark)}
+.sum-stat .label{font-size:10px;color:var(--text-muted);margin-top:2px}
+.sum-stat .change{font-size:10px;font-weight:600;margin-top:4px}
+.sum-unlock{background:linear-gradient(135deg,#FFE082,#FFD54F);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;text-align:center}
+.sum-unlock .unlock-icon{font-size:40px;margin-bottom:8px;animation:bounce 1.2s ease infinite}
+.sum-unlock .unlock-title{font-size:15px;font-weight:800;color:#F57F17}
+.sum-unlock .unlock-desc{font-size:12px;color:#F57F17;margin-top:4px}
+
+/* ====== ADVENTURE MAP ====== */
+.map-screen{background:linear-gradient(180deg,#1a1a2e 0%,#16213e 100%)}
+.map-header{background:linear-gradient(135deg,#6C5CE7,#A29BFE);color:#fff;padding:12px 16px;flex-shrink:0}
+.map-header .mh-top{display:flex;justify-content:space-between;align-items:center}
+.map-header .mh-title{font-size:17px;font-weight:800}
+.map-header .mh-zone{font-size:11px;opacity:.8;margin-top:2px}
+.map-header .mh-streak{background:rgba(255,255,255,.2);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:600}
+.map-scroll{flex:1;overflow-y:auto;position:relative;padding:0}
+/* Zone theme backgrounds */
+.zone{position:relative;padding:20px 0}
+.zone-grass{background:linear-gradient(180deg,#A8E6A1 0%,#81C784 100%)}
+.zone-forest{background:linear-gradient(180deg,#66BB6A 0%,#43A047 100%)}
+.zone-mountain{background:linear-gradient(180deg,#90A4AE 0%,#78909C 100%)}
+.zone-coast{background:linear-gradient(180deg,#4FC3F7 0%,#29B6F6 100%)}
+.zone-label{text-align:center;font-size:13px;font-weight:800;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.2);padding:8px 0 4px}
+.zone-label .zl-en{font-size:10px;opacity:.7;font-weight:600}
+/* Path nodes */
+.map-track{position:relative;width:100%;min-height:100%;padding:12px 0}
+.map-node{position:absolute;width:56px;height:56px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.25);z-index:2;transition:transform .2s;cursor:pointer}
+.map-node:active{transform:scale(.9)}
+.map-node .mn-icon{font-size:22px;line-height:1}
+.map-node .mn-label{font-size:8px;font-weight:700;margin-top:1px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+/* Node types */
+.node-done{background:linear-gradient(135deg,#00C853,#00E676);border:3px solid rgba(255,255,255,.4)}
+.node-current{background:linear-gradient(135deg,#FFD700,#FFA000);border:3px solid #fff;animation:pulse 1.8s infinite;z-index:3}
+.node-locked{background:rgba(255,255,255,.3);border:3px solid rgba(255,255,255,.2)}
+.node-boss{background:linear-gradient(135deg,#E53935,#FF6B6B);border:3px solid rgba(255,255,255,.4)}
+.node-boss.node-current{animation:pulse 1.2s infinite}
+.node-rest{background:linear-gradient(135deg,#78909C,#90A4AE);border:3px solid rgba(255,255,255,.3)}
+.node-bonus{background:linear-gradient(135deg,#AB47BC,#CE93D8);border:3px solid rgba(255,255,255,.3)}
+.node-milestone{background:linear-gradient(135deg,#FFD700,#FFC107);border:3px solid rgba(255,255,255,.4);width:64px;height:64px}
+.node-milestone .mn-icon{font-size:26px}
+/* Path connectors */
+.map-path{position:absolute;z-index:1}
+/* Fog overlay */
+.map-fog{position:absolute;top:0;bottom:0;width:100%;background:linear-gradient(180deg,rgba(20,20,40,0.4) 0%,rgba(20,20,40,0.7) 100%);z-index:4;pointer-events:none}
+/* Branch choice indicator */
+.map-branch-label{position:absolute;background:rgba(255,255,255,.9);border-radius:8px;padding:4px 10px;font-size:10px;font-weight:700;z-index:3;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+/* Map tooltip */
+.map-tooltip{position:absolute;bottom:80px;left:16px;right:16px;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);border-radius:14px;padding:16px;color:#fff;z-index:50;display:none;animation:slideUp .3s ease}
+.map-tooltip.show{display:block}
+.map-tooltip .mt-type{font-size:11px;color:var(--primary-light);font-weight:700;margin-bottom:4px}
+.map-tooltip .mt-title{font-size:15px;font-weight:700;margin-bottom:6px}
+.map-tooltip .mt-desc{font-size:12px;opacity:.8;line-height:1.5;margin-bottom:12px}
+.map-tooltip .mt-btn{width:100%;height:42px;border:none;border-radius:10px;background:var(--primary);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+
+/* ====== PROGRESS ====== */
+.progress-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.progress-card .pc-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.progress-card .pc-sub{font-size:12px;color:var(--text-muted);margin-bottom:16px}
+.chart-container{position:relative;height:140px;margin-bottom:12px}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:120px}
+.chart-bar{flex:1;border-radius:6px 6px 0 0;transition:height .8s ease;position:relative;min-height:4px}
+.chart-bar .bar-val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--text-light);white-space:nowrap}
+.chart-labels{display:flex;gap:6px;margin-top:6px}
+.chart-labels span{flex:1;text-align:center;font-size:10px;color:var(--text-muted)}
+.pr-row{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:12px;margin-bottom:8px}
+.pr-row .pr-icon{width:36px;height:36px;border-radius:10px;background:rgba(255,107,53,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pr-row .pr-info{flex:1}
+.pr-row .pr-name{font-size:13px;font-weight:600}
+.pr-row .pr-value{font-size:12px;color:var(--text-muted);margin-top:2px}
+.pr-row .pr-change{font-size:12px;font-weight:700;color:var(--accent-dark)}
+
+/* ====== PROFILE ====== */
+.profile-hero{background:linear-gradient(135deg,var(--primary),var(--pink));border-radius:var(--radius);padding:24px;color:#fff;text-align:center;margin-bottom:16px}
+.profile-hero .avatar{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 10px}
+.profile-hero .name{font-size:18px;font-weight:800}
+.profile-hero .level{display:inline-block;background:rgba(255,255,255,.2);border-radius:12px;padding:3px 12px;font-size:12px;font-weight:600;margin-top:6px}
+.profile-hero .xp-bar{height:6px;background:rgba(255,255,255,.2);border-radius:3px;margin-top:12px;overflow:hidden}
+.profile-hero .xp-fill{height:100%;background:#fff;border-radius:3px;width:68%}
+.profile-hero .xp-text{font-size:11px;opacity:.8;margin-top:4px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.stat-grid .sg-item{background:var(--card);border-radius:12px;padding:14px 8px;text-align:center;box-shadow:var(--shadow)}
+.stat-grid .sg-num{font-size:18px;font-weight:800}
+.stat-grid .sg-label{font-size:10px;color:var(--text-muted);margin-top:2px}
+.achievement-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.ach-item{text-align:center;padding:14px 8px;background:var(--card);border-radius:12px;box-shadow:var(--shadow)}
+.ach-item .ach-emoji{font-size:32px}
+.ach-item .ach-name{font-size:11px;font-weight:600;margin-top:6px}
+.ach-item .ach-status{font-size:9px;color:var(--text-muted);margin-top:2px}
+.ach-item.locked{opacity:.4;filter:grayscale(1)}
+
+.fab{position:absolute;bottom:80px;right:16px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,230,118,.4);z-index:10;transition:transform .15s}
+.fab:active{transform:scale(.9)}
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+
+<!-- ====== PUSH NOTIFICATION ====== -->
+<div class="push-notif" id="pushNotif">
+  <div class="pn-icon">🔥</div>
+  <div class="pn-body">
+    <div class="pn-title">FitJourney · 今日训练提醒</div>
+    <div class="pn-text">今天计划了上肢力量训练（45min），花30秒填写今日状态，AI会帮你调整到最佳计划 👆</div>
+  </div>
+  <div class="pn-close" onclick="document.getElementById('pushNotif').classList.remove('show')">✕</div>
+</div>
+
+<!-- ====== ONBOARDING 1 ====== -->
+<div class="screen active" id="onboard1">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋 88%</span></div></div>
+  <div class="content">
+    <div class="onboard-hero">
+      <div class="logo">🔥</div>
+      <h1>FitJourney</h1>
+      <p>你的AI健身搭档，每一次训练都被看见</p>
+    </div>
+    <div class="progress-dots"><span class="active"></span><span></span><span></span><span></span><span></span></div>
+    <div class="q-card">
+      <div class="q-label">第 1 题 / 共 5 题</div>
+      <div class="q-title">你的运动基础是？</div>
+      <div class="q-options">
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🌱</div><div class="opt-text"><div class="opt-title">运动小白</div><div class="opt-desc">很少运动，想从零开始</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">💪</div><div class="opt-text"><div class="opt-title">有点基础</div><div class="opt-desc">偶尔运动，有基本体能</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🏆</div><div class="opt-text"><div class="opt-title">熟练工</div><div class="opt-desc">长期规律训练，追求进阶</div></div><div class="check">✓</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px"><button class="btn" onclick="go('onboard1','onboard2')">继续 →</button></div>
+</div>
+
+<!-- ====== ONBOARDING 2-5 (same as before, condensed) ====== -->
+<div class="screen" id="onboard2">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="navbar"><div class="back" onclick="go('onboard2','onboard1')">‹</div><div class="title"></div><div class="placeholder"></div></div>
+  <div class="content">
+    <div class="progress-dots"><span class="active"></span><span class="active"></span><span></span><span></span><span></span></div>
+    <div class="q-card">
+      <div class="q-label">第 2 题 / 共 5 题</div>
+      <div class="q-title">你的主要目标是？</div>
+      <div class="q-options">
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🔥</div><div class="opt-text"><div class="opt-title">减脂</div><div class="opt-desc">降低体脂率，改善体型</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🖖</div><div class="opt-text"><div class="opt-title">增肌</div><div class="opt-desc">增加肌肉量，提升力量</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">✨</div><div class="opt-text"><div class="opt-title">塑形</div><div class="opt-desc">线条更紧致，体态更优美</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">⚡</div><div class="opt-text"><div class="opt-title">提升体能</div><div class="opt-desc">增强耐力和爆发力</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🩹</div><div class="opt-text"><div class="opt-title">康复矫正</div><div class="opt-desc">改善体态，针对性恢复</div></div><div class="check">✓</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px"><button class="btn" onclick="go('onboard2','onboard3')">继续 →</button></div>
+</div>
+
+<div class="screen" id="onboard3">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="navbar"><div class="back" onclick="go('onboard3','onboard2')">‹</div><div class="title"></div><div class="placeholder"></div></div>
+  <div class="content">
+    <div class="progress-dots"><span class="active"></span><span class="active"></span><span class="active"></span><span></span><span></span></div>
+    <div class="q-card">
+      <div class="q-label">第 3 题 / 共 5 题</div>
+      <div class="q-title">每周能练几天？每次多久？</div>
+      <div class="q-options">
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">😌</div><div class="opt-text"><div class="opt-title">轻松模式</div><div class="opt-desc">每周 2-3 天，每次 30 分钟</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">😊</div><div class="opt-text"><div class="opt-title">均衡模式</div><div class="opt-desc">每周 3-4 天，每次 45 分钟</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🔥</div><div class="opt-text"><div class="opt-title">认真模式</div><div class="opt-desc">每周 5+ 天，每次 60 分钟</div></div><div class="check">✓</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px"><button class="btn" onclick="go('onboard3','onboard4')">继续 →</button></div>
+</div>
+
+<div class="screen" id="onboard4">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="navbar"><div class="back" onclick="go('onboard4','onboard3')">‹</div><div class="title"></div><div class="placeholder"></div></div>
+  <div class="content">
+    <div class="progress-dots"><span class="active"></span><span class="active"></span><span class="active"></span><span class="active"></span><span></span></div>
+    <div class="q-card">
+      <div class="q-label">第 4 题 / 共 5 题</div>
+      <div class="q-title">有伤病或需要注意的部位吗？</div>
+      <div class="q-options">
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">✅</div><div class="opt-text"><div class="opt-title">没有</div><div class="opt-desc">身体状态良好，无伤病</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🦵</div><div class="opt-text"><div class="opt-title">膝盖</div><div class="opt-desc">膝盖不适，避免深蹲等冲击动作</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🦴</div><div class="opt-text"><div class="opt-title">腰椎</div><div class="opt-desc">腰间盘问题，避免大重量复合动作</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🤕</div><div class="opt-text"><div class="opt-title">肩膀</div><div class="opt-desc">肩部不适，限制过头上举</div></div><div class="check">✓</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px"><button class="btn" onclick="go('onboard4','onboard5')">继续 →</button></div>
+</div>
+
+<div class="screen" id="onboard5">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="navbar"><div class="back" onclick="go('onboard5','onboard4')">‹</div><div class="title"></div><div class="placeholder"></div></div>
+  <div class="content">
+    <div class="progress-dots"><span class="active"></span><span class="active"></span><span class="active"></span><span class="active"></span><span class="active"></span></div>
+    <div class="q-card">
+      <div class="q-label">第 5 题 / 共 5 题</div>
+      <div class="q-title">你偏好的训练方式是？</div>
+      <div class="q-options">
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🏋️</div><div class="opt-text"><div class="opt-title">器械训练</div><div class="opt-desc">健身房器械和哑铃</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🤸</div><div class="opt-text"><div class="opt-title">自重训练</div><div class="opt-desc">俯卧撑、深蹲等自重动作</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🔀</div><div class="opt-text"><div class="opt-title">混合训练</div><div class="opt-desc">器械+自重结合</div></div><div class="check">✓</div></div>
+        <div class="q-opt" onclick="selectOpt(this)"><div class="opt-icon">🏃</div><div class="opt-text"><div class="opt-title">户外运动</div><div class="opt-desc">跑步、骑行等</div></div><div class="check">✓</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px"><button class="btn" onclick="go('onboard5','planReady')">生成我的计划 🚀</button></div>
+</div>
+
+<!-- ====== PLAN GENERATED ====== -->
+<div class="screen" id="planReady">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="content" style="padding-top:20px">
+    <div class="plan-hero">
+      <div class="check-circle">✅</div>
+      <h2>计划已生成！</h2>
+      <div class="sub">AI 已根据你的情况定制了 8 周冒险旅程</div>
+    </div>
+    <div class="plan-stat-row">
+      <div class="plan-stat"><div class="num">8</div><div class="label">周数</div></div>
+      <div class="plan-stat"><div class="num">3-4</div><div class="label">天/周</div></div>
+      <div class="plan-stat"><div class="num">45min</div><div class="label">每次</div></div>
+      <div class="plan-stat"><div class="num">塑形</div><div class="label">目标</div></div>
+    </div>
+    <div class="section-title">🗺️ 冒险地图预览</div>
+    <div style="background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--primary)">Region 1 · 新手草原 <span style="font-size:11px;color:var(--text-muted);font-weight:400">→ 区域 2 · 力量森林 → ...</span></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-size:10px;background:rgba(0,230,118,.1);color:var(--accent-dark);padding:3px 8px;border-radius:8px;font-weight:600">力量关</span>
+        <span style="font-size:10px;background:rgba(108,92,231,.1);color:var(--primary);padding:3px 8px;border-radius:8px;font-weight:600">有氧关</span>
+        <span style="font-size:10px;background:rgba(255,107,53,.1);color:var(--orange);padding:3px 8px;border-radius:8px;font-weight:600">Boss关</span>
+        <span style="font-size:10px;background:rgba(171,71,188,.1);color:#AB47BC;padding:3px 8px;border-radius:8px;font-weight:600">挑战关</span>
+        <span style="font-size:10px;background:rgba(120,144,156,.1);color:#78909C;padding:3px 8px;border-radius:8px;font-weight:600">恢复关</span>
+        <span style="font-size:10px;background:rgba(255,215,0,.15);color:#F57F17;padding:3px 8px;border-radius:8px;font-weight:600">里程碑</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);line-height:1.5">完成训练 = 通关一个节点。每周末有 Boss 关，通关后解锁新区域。部分岔路口可选择不同训练路线，主线任务完成解锁奖励。</div>
+    </div>
+    <div class="section-title">📋 本周计划（第1周 · 基础适应期）</div>
+    <div class="week-plan">
+      <div class="day-card today"><div class="day-label"><div class="d-num">1</div><div class="d-name">周一</div></div><div class="day-info"><div class="d-title">上肢力量训练</div><div class="d-sub">45min · 5个动作</div></div><div class="day-tag tag-strength">力量</div></div>
+      <div class="day-card"><div class="day-label"><div class="d-num">2</div><div class="d-name">周二</div></div><div class="day-info"><div class="d-title">有氧燃脂</div><div class="d-sub">30min · 中低强度</div></div><div class="day-tag tag-cardio">有氧</div></div>
+      <div class="day-card rest"><div class="day-label"><div class="d-num">3</div><div class="d-name">周三</div></div><div class="day-info"><div class="d-title">主动恢复</div><div class="d-sub">15min · 拉伸+泡沫轴</div></div><div class="day-tag tag-rest">恢复</div></div>
+      <div class="day-card"><div class="day-label"><div class="d-num">4</div><div class="d-name">周四</div></div><div class="day-info"><div class="d-title">下肢力量训练</div><div class="d-sub">45min · 5个动作</div></div><div class="day-tag tag-strength">力量</div></div>
+      <div class="day-card"><div class="day-label"><div class="d-num">5</div><div class="d-name">周五</div></div><div class="day-info"><div class="d-title">核心+全身循环</div><div class="d-sub">35min · 高密度</div></div><div class="day-tag tag-strength">力量</div></div>
+      <div class="day-card rest"><div class="day-label"><div class="d-num">6</div><div class="d-name">周六</div></div><div class="day-info"><div class="d-title">休息日</div><div class="d-sub">自由活动</div></div><div class="day-tag tag-rest">休息</div></div>
+      <div class="day-card rest"><div class="day-label"><div class="d-num">7</div><div class="d-name">周日</div></div><div class="day-info"><div class="d-title">休息日</div><div class="d-sub">自由活动</div></div><div class="day-tag tag-rest">休息</div></div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px"><button class="btn btn-accent" onclick="go('planReady','today')">开始我的第一天 →</button></div>
+</div>
+
+<!-- ====== TODAY (HOME) ====== -->
+<div class="screen" id="today">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="navbar"><div class="back" style="opacity:0">‹</div><div class="title">FitJourney</div><div class="placeholder"></div></div>
+  <div class="content">
+    <div class="today-hero">
+      <div class="greeting">早上好，果冻 💪</div>
+      <div class="date">8月19日 周一 · 第1周第1天</div>
+      <div class="streak-badge">🔥 连续打卡 1 天</div>
+    </div>
+
+    <!-- Map mini preview -->
+    <div class="map-mini-preview" onclick="go('today','adventure')">
+      <div class="mm-title">🗺️ 冒险地图 <span style="font-size:12px;color:var(--text-muted);font-weight:400">查看全部 →</span></div>
+      <div class="mm-track">
+        <div class="mini-node done" style="left:6%;top:16px">✓</div>
+        <div class="mini-node current" style="left:24%;top:16px">!</div>
+        <div class="mini-node locked" style="left:42%;top:16px">🔒</div>
+        <div class="mini-node locked" style="left:60%;top:16px">🔒</div>
+        <div class="mini-node locked" style="left:78%;top:16px;background:rgba(229,57,53,.5)">👹</div>
+      </div>
+      <div class="mm-foot">新手区域 · 节点 2/7 · 周末 Boss 关待解锁</div>
+    </div>
+
+    <!-- Today's training card - tapping opens check-in popup -->
+    <div class="today-plan-card" onclick="openCheckin()">
+      <div class="tp-header">
+        <div class="tp-title">今日训练</div>
+        <div class="tp-tag">上肢力量 · 45min</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">👆 点击填写今日状态，AI将据此调整计划</div>
+      <div class="exercise-list">
+        <div class="exercise-item"><div class="ex-icon">🏋️</div><div class="ex-info"><div class="ex-name">哑铃卧推</div><div class="ex-detail">4组 × 10-12次</div></div><div class="ex-time">~8min</div></div>
+        <div class="exercise-item"><div class="ex-icon">🚣</div><div class="ex-info"><div class="ex-name">坐姿划船</div><div class="ex-detail">4组 × 12次</div></div><div class="ex-time">~8min</div></div>
+        <div class="exercise-item"><div class="ex-icon">💪</div><div class="ex-info"><div class="ex-name">哑铃肩推</div><div class="ex-detail">3组 × 10次</div></div><div class="ex-time">~6min</div></div>
+        <div class="exercise-item"><div class="ex-icon">🤸</div><div class="ex-info"><div class="ex-name">平板支撑</div><div class="ex-detail">3组 × 45秒</div></div><div class="ex-time">~4min</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab active"><div class="icon">🏠</div>今天</div>
+    <div class="tab" onclick="go('today','adventure')"><div class="icon">🗺️</div>冒险</div>
+    <div class="tab" onclick="go('today','progress')"><div class="icon">📊</div>进度</div>
+    <div class="tab" onclick="go('today','profile')"><div class="icon">👤</div>我的</div>
+  </div>
+</div>
+
+<!-- ====== CHECK-IN MODAL (pops up when entering training) ====== -->
+<div class="modal-overlay" id="checkinModal">
+  <div class="modal-sheet">
+    <div class="ms-handle"></div>
+    <div class="ms-title">📋 今日状态签到</div>
+    <div class="ms-sub">花30秒填写，AI将据此调整今天的训练计划</div>
+
+    <div class="ci-item">
+      <div class="ci-label">😴 昨晚睡了多久？<span class="ci-value" id="sleepVal">7小时</span></div>
+      <input type="range" id="sleepSlider" class="ci-slider" min="4" max="10" value="7" step="0.5" oninput="document.getElementById('sleepVal').innerText=this.value+'小时';updateAIAdvice()">
+      <div class="ci-slider-emoji"><span>4h</span><span>7h</span><span>10h</span></div>
+    </div>
+    <div class="ci-item">
+      <div class="ci-label">🤸 身体感觉如何？<span class="ci-value" id="bodyVal">良好</span></div>
+      <input type="range" id="bodySlider" class="ci-slider" min="1" max="5" value="4" oninput="const m=['很差','一般','还行','良好','超棒'];document.getElementById('bodyVal').innerText=m[this.value-1];updateAIAdvice()">
+      <div class="ci-slider-emoji"><span>😣</span><span>😐</span><span>🙂</span><span>😊</span><span>🤩</span></div>
+    </div>
+    <div class="ci-item">
+      <div class="ci-label">💪 肌肉酸痛程度？<span class="ci-value" id="soreVal">轻微</span></div>
+      <input type="range" id="soreSlider" class="ci-slider" min="1" max="5" value="2" oninput="const m=['无痛','轻微','明显','较强','严重'];document.getElementById('soreVal').innerText=m[this.value-1];updateAIAdvice()">
+      <div class="ci-slider-emoji"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+    </div>
+    <div class="ci-item">
+      <div class="ci-label">心情怎么样？</div>
+      <div class="ci-mood-row">
+        <div class="ci-mood" onclick="selectMood(this);updateAIAdvice()"><div class="emoji">😔</div><div class="label">低落</div></div>
+        <div class="ci-mood" onclick="selectMood(this);updateAIAdvice()"><div class="emoji">😐</div><div class="label">一般</div></div>
+        <div class="ci-mood selected" onclick="selectMood(this);updateAIAdvice()"><div class="emoji">🙂</div><div class="label">不错</div></div>
+        <div class="ci-mood" onclick="selectMood(this);updateAIAdvice()"><div class="emoji">😄</div><div class="label">很好</div></div>
+        <div class="ci-mood" onclick="selectMood(this);updateAIAdvice()"><div class="emoji">🤩</div><div class="label">超赞</div></div>
+      </div>
+    </div>
+    <div class="ci-item">
+      <div class="ci-label">⏱ 今天有多少时间？</div>
+      <div class="ci-time-row">
+        <div class="ci-time" onclick="selectTime(this);updateAIAdvice()">15min</div>
+        <div class="ci-time" onclick="selectTime(this);updateAIAdvice()">30min</div>
+        <div class="ci-time selected" onclick="selectTime(this);updateAIAdvice()">45min</div>
+        <div class="ci-time" onclick="selectTime(this);updateAIAdvice()">60min</div>
+      </div>
+    </div>
+
+    <!-- AI adjust result (dynamic) -->
+    <div class="ci-adjusted" id="aiAdviceBox" style="margin-bottom:12px">
+      <div class="ci-icon">🤖</div>
+      <div class="ci-text" id="aiAdviceText"><strong>AI 教练调整建议</strong><br>状态良好，保持原计划。今天完成上肢力量训练，预计 45 分钟。冲！💪</div>
+    </div>
+    <div class="ci-change-list" id="aiChangeList"></div>
+
+    <button class="btn btn-accent" style="margin-top:16px" onclick="closeCheckin()">确认，开始训练 🏁</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="skipCheckin()">跳过签到</button>
+  </div>
+</div>
+
+<!-- ====== TRAINING MODE ====== -->
+<div class="screen" id="training">
+  <div class="training-header">
+    <div class="th-top">
+      <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="go('training','today')"><span style="font-size:18px">✕</span><span style="font-size:13px">结束训练</span></div>
+      <div class="th-progress">动作 1/5</div>
+      <div class="th-timer" id="trainTimer">12:34</div>
+    </div>
+    <div class="progress-bar"><div class="fill" style="width:20%"></div></div>
+  </div>
+  <div class="ex-current" id="exCurrent">
+    <div class="adjusted-banner" id="trainAdjustBanner" style="display:none">
+      <div class="ab-icon">🤖</div>
+      <div>
+        <strong>AI 已根据今日状态调整计划</strong>
+        <div class="ab-changes" id="trainAdjustDetail"></div>
+      </div>
+    </div>
+    <div class="ex-name-big" id="exName">哑铃卧推</div>
+    <div class="ex-target" id="exTarget">目标：4组 × 10-12次 · 胸肌、三头肌</div>
+    <div class="ex-demo" id="exDemo">🏋️</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn-small btn-outline" style="flex:1">📹 动作示范</button>
+      <button class="btn-small btn-outline" style="flex:1">💡 常见错误</button>
+    </div>
+    <div class="section-title" style="margin-bottom:10px">训练记录</div>
+    <div class="set-list" id="setList"></div>
+    <div style="margin-bottom:16px"><div class="ci-label" style="margin-bottom:8px">主观疲劳度 RPE</div>
+      <div class="rpe-row"><div class="rpe-pill" onclick="selectRPE(this)">5</div><div class="rpe-pill" onclick="selectRPE(this)">6</div><div class="rpe-pill selected" onclick="selectRPE(this)">7</div><div class="rpe-pill" onclick="selectRPE(this)">8</div><div class="rpe-pill" onclick="selectRPE(this)">9</div><div class="rpe-pill" onclick="selectRPE(this)">10</div></div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px"><button class="btn btn-accent" onclick="completeSet()">✓ 完成第3组</button></div>
+</div>
+
+<!-- ====== TRAINING SUMMARY ====== -->
+<div class="screen" id="summary">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="content" style="padding-top:20px">
+    <div class="summary-hero">
+      <div class="celebrate">🎉</div>
+      <h2>通关成功！</h2>
+      <div class="sub">上肢力量 · 节点1 已完成</div>
+    </div>
+    <div class="summary-stats">
+      <div class="sum-stat"><div class="num">42<span style="font-size:12px">min</span></div><div class="label">训练时长</div><div class="change" style="color:var(--accent-dark)">↑ 比上次+5min</div></div>
+      <div class="sum-stat"><div class="num">14</div><div class="label">完成组数</div><div class="change">14/14组</div></div>
+      <div class="sum-stat"><div class="num up">3,420<span style="font-size:12px">kg</span></div><div class="label">训练容量</div><div class="change" style="color:var(--accent-dark)">↑ +8%</div></div>
+    </div>
+    <div class="sum-unlock">
+      <div class="unlock-icon">🗺️</div>
+      <div class="unlock-title">地图节点已解锁！</div>
+      <div class="unlock-desc">新手草原 · 节点1 完成 → 节点2 已开放，继续前进！</div>
+    </div>
+    <div class="progress-card">
+      <div class="pc-title">📊 本周进度</div>
+      <div class="pc-sub">第1周 · 基础适应期 · 新手草原</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="flex:1;background:var(--bg);border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--accent-dark)">1/5</div><div style="font-size:10px;color:var(--text-muted)">本周完成</div></div>
+        <div style="flex:1;background:var(--bg);border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--orange)">🔥 1</div><div style="font-size:10px;color:var(--text-muted)">连续天数</div></div>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;padding:14px">
+        <div style="font-size:12px;color:var(--text-light);margin-bottom:6px">💬 AI教练说</div>
+        <div style="font-size:13px;line-height:1.6">首次训练表现很棒！RPE 控制在 6-7 非常合理，说明重量选得恰到好处。下次可以尝试把哑铃卧推加重 1kg。继续保持！💪</div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px">
+    <button class="btn" onclick="go('summary','adventure')">查看冒险地图 →</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="go('summary','today')">返回首页</button>
+  </div>
+</div>
+
+<!-- ====== ADVENTURE MAP ====== -->
+<div class="screen map-screen" id="adventure">
+  <div class="map-header">
+    <div class="mh-top">
+      <div>
+        <div class="mh-title">🗺️ 冒险地图</div>
+        <div class="mh-zone">新手草原 · 第1周 · 基础适应期</div>
+      </div>
+      <div class="mh-streak">🔥 1天</div>
+    </div>
+  </div>
+  <div class="map-scroll" id="mapScroll">
+    <!-- Zone 1: Grassland -->
+    <div class="zone zone-grass">
+      <div class="zone-label">新手草原<span class="zl-en"> · Beginner Meadow</span></div>
+      <div class="map-track" style="height:520px;position:relative">
+        <!-- SVG paths -->
+        <svg style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1" viewBox="0 0 375 520" preserveAspectRatio="none">
+          <!-- Main path: starts bottom center, winds up -->
+          <path d="M 187 480 Q 187 430 187 400" stroke="rgba(255,255,255,.5)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 187 400 Q 120 360 80 340 Q 60 320 60 290" stroke="rgba(255,255,255,.5)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 187 400 Q 254 360 294 340 Q 314 320 314 290" stroke="rgba(255,255,255,.3)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 80 290 Q 80 250 80 230" stroke="rgba(255,255,255,.5)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 314 290 Q 314 250 314 230" stroke="rgba(0,0,0,.15)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 80 230 Q 120 190 187 168" stroke="rgba(255,255,255,.5)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 314 230 Q 274 190 187 168" stroke="rgba(255,255,255,.3)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 187 168 Q 187 130 187 100" stroke="rgba(0,0,0,.15)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 187 100 Q 187 60 187 30" stroke="rgba(0,0,0,.08)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+        </svg>
+
+        <!-- Node 1: Done (Day1 Mon - Upper body) -->
+        <div class="map-node node-done" style="left:calc(50% - 28px);top:452px" onclick="showMapTooltip('力量关','上肢力量训练','已完成 · 42min · 容量3,420kg','done')">
+          <div class="mn-icon">✅</div><div class="mn-label">Day1</div>
+        </div>
+
+        <!-- Node 2: Current (Day2 Tue - Cardio) -->
+        <div class="map-node node-current" style="left:calc(50% - 28px);top:372px" onclick="showMapTooltip('有氧关','有氧燃脂训练','今日待挑战 · 30min · 中低强度','current')">
+          <div class="mn-icon">🏃</div><div class="mn-label">Day2</div>
+        </div>
+
+        <!-- Branch labels -->
+        <div class="map-branch-label" style="left:40px;top:282px;color:var(--primary)">🤸 恢复路线</div>
+        <div class="map-branch-label" style="right:40px;top:282px;color:var(--orange);opacity:.5">💪 力量路线</div>
+
+        <!-- Node 3a: Left path - Rest/Recovery -->
+        <div class="map-node node-locked" style="left:calc(21% - 28px);top:262px" onclick="showMapTooltip('恢复关','主动恢复','可解锁 · 15min · 拉伸+泡沫轴','locked')">
+          <div class="mn-icon">🧘</div><div class="mn-label">Day3</div>
+        </div>
+
+        <!-- Node 3b: Right path - Strength bonus (locked, requires boss) -->
+        <div class="map-node node-bonus node-locked" style="left:calc(79% - 28px);top:262px" onclick="showMapTooltip('挑战关','核心强化','需先通关Boss · 额外奖励','locked')">
+          <div class="mn-icon">⭐</div><div class="mn-label">挑战</div>
+        </div>
+
+        <!-- Node 4: Converge (Day4 Thu - Lower body) -->
+        <div class="map-node node-locked" style="left:calc(50% - 28px);top:140px" onclick="showMapTooltip('力量关','下肢力量训练','待解锁 · 45min · 5个动作','locked')">
+          <div class="mn-icon">🔒</div><div class="mn-label">Day4</div>
+        </div>
+
+        <!-- Node 5: (Day5 Fri - Core+Full body) -->
+        <div class="map-node node-locked" style="left:calc(50% - 28px);top:72px" onclick="showMapTooltip('力量关','核心+全身循环','待解锁 · 35min · 高密度','locked')">
+          <div class="mn-icon">🔒</div><div class="mn-label">Day5</div>
+        </div>
+
+        <!-- Node 6: BOSS (Day6/7 - Weekend Boss) -->
+        <div class="map-node node-boss node-locked" style="left:calc(50% - 28px);top:2px" onclick="showMapTooltip('Boss关','周末Boss挑战','需完成Day5解锁 · 全力测试','locked')">
+          <div class="mn-icon">👹</div><div class="mn-label">Boss</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone 2: Forest (locked/foggy) -->
+    <div class="zone zone-forest" style="position:relative">
+      <div class="zone-label" style="opacity:.5">🔒 力量森林<span class="zl-en"> · Strength Forest</span></div>
+      <div class="map-track" style="height:280px;position:relative">
+        <div class="map-fog"></div>
+        <svg style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1" viewBox="0 0 375 280" preserveAspectRatio="none">
+          <path d="M 187 260 Q 140 220 100 200 Q 70 170 70 140" stroke="rgba(255,255,255,.15)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 187 260 Q 234 220 274 200 Q 304 170 304 140" stroke="rgba(255,255,255,.15)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 70 140 Q 70 100 70 70" stroke="rgba(255,255,255,.15)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 304 140 Q 304 100 304 70" stroke="rgba(255,255,255,.15)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+          <path d="M 70 70 Q 128 40 187 30 Q 246 40 304 70" stroke="rgba(255,255,255,.15)" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+        </svg>
+        <!-- Milestone gate -->
+        <div class="map-node node-milestone" style="position:relative;margin:0 auto;top:240px;left:calc(50% - 32px)">
+          <div class="mn-icon">🚪</div><div class="mn-label">区域入口</div>
+        </div>
+        <div style="text-align:center;padding-top:10px;font-size:12px;color:rgba(255,255,255,.6);position:absolute;bottom:240px;left:0;right:0;z-index:5">
+          通关新手草原 Boss 后解锁
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone 3: Mountain (deeply locked) -->
+    <div class="zone zone-mountain" style="position:relative">
+      <div class="zone-label" style="opacity:.3">🔒 耐力高原<span class="zl-en"> · Endurance Plateau</span></div>
+      <div class="map-track" style="height:120px;position:relative">
+        <div class="map-fog" style="opacity:0.7"></div>
+        <div style="text-align:center;padding-top:40px;font-size:12px;color:rgba(255,255,255,.4)">未探索</div>
+      </div>
+    </div>
+    <!-- Zone 4: Coast -->
+    <div class="zone zone-coast" style="position:relative">
+      <div class="zone-label" style="opacity:.2">🔒 塑形海岸<span class="zl-en"> · Shaping Coast</span></div>
+      <div class="map-track" style="height:120px;position:relative">
+        <div class="map-fog" style="opacity:0.8"></div>
+        <div style="text-align:center;padding-top:40px;font-size:12px;color:rgba(255,255,255,.3)">未探索</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map tooltip -->
+  <div class="map-tooltip" id="mapTooltip">
+    <div class="mt-type" id="mtType">力量关</div>
+    <div class="mt-title" id="mtTitle">上肢力量训练</div>
+    <div class="mt-desc" id="mtDesc">已完成 · 42min · 容量3,420kg</div>
+    <button class="mt-btn" id="mtBtn" onclick="hideMapTooltip();go('adventure','today');setTimeout(()=>openCheckin(),300)">开始挑战</button>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab" onclick="go('adventure','today')"><div class="icon">🏠</div>今天</div>
+    <div class="tab active"><div class="icon">🗺️</div>冒险</div>
+    <div class="tab" onclick="go('adventure','progress')"><div class="icon">📊</div>进度</div>
+    <div class="tab" onclick="go('adventure','profile')"><div class="icon">👤</div>我的</div>
+  </div>
+</div>
+
+<!-- ====== PROGRESS ====== -->
+<div class="screen" id="progress">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="navbar"><div class="placeholder"></div><div class="title">训练进度</div><div class="placeholder"></div></div>
+  <div class="content">
+    <div class="progress-card">
+      <div class="pc-title">📈 训练容量趋势</div>
+      <div class="pc-sub">最近 4 次力量训练</div>
+      <div class="chart-container">
+        <div class="chart-bars">
+          <div class="chart-bar" style="height:60%;background:var(--primary-light)"><div class="bar-val">2,850</div></div>
+          <div class="chart-bar" style="height:72%;background:var(--primary-light)"><div class="bar-val">3,160</div></div>
+          <div class="chart-bar" style="height:80%;background:var(--primary-light)"><div class="bar-val">3,420</div></div>
+          <div class="chart-bar" style="height:100%;background:linear-gradient(180deg,var(--accent),var(--accent-dark))"><div class="bar-val" style="color:var(--accent-dark)">3,420</div></div>
+        </div>
+        <div class="chart-labels"><span>7/22</span><span>7/29</span><span>8/12</span><span>8/19</span></div>
+      </div>
+      <div style="background:rgba(0,230,118,.08);border-radius:10px;padding:12px;font-size:12px;color:var(--text-light);line-height:1.5"><strong style="color:var(--accent-dark)">↑ 容量增长 20%</strong> — 比第一次训练多了 570kg！</div>
+    </div>
+    <div class="progress-card">
+      <div class="pc-title">🏆 个人记录 (PR)</div>
+      <div class="pc-sub">你的力量里程碑</div>
+      <div class="pr-row"><div class="pr-icon">🏋️</div><div class="pr-info"><div class="pr-name">哑铃卧推</div><div class="pr-value">8.5kg × 12次</div></div><div class="pr-change">NEW</div></div>
+      <div class="pr-row"><div class="pr-icon">🤸</div><div class="pr-info"><div class="pr-name">平板支撑</div><div class="pr-value">45秒 × 3组</div></div><div class="pr-change">NEW</div></div>
+      <div class="pr-row"><div class="pr-icon">💪</div><div class="pr-info"><div class="pr-name">坐姿划船</div><div class="pr-value">25kg × 12次</div></div><div class="pr-change">--</div></div>
+    </div>
+    <div class="progress-card">
+      <div class="pc-title">⚖️ 身体数据</div>
+      <div class="pc-sub">每周更新 · 趋势追踪</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="flex:1;background:var(--bg);border-radius:10px;padding:14px;text-align:center"><div style="font-size:20px;font-weight:800">62.5<span style="font-size:12px">kg</span></div><div style="font-size:10px;color:var(--text-muted)">体重</div><div style="font-size:10px;color:var(--accent-dark);font-weight:600;margin-top:2px">↓ -0.5kg</div></div>
+        <div style="flex:1;background:var(--bg);border-radius:10px;padding:14px;text-align:center"><div style="font-size:20px;font-weight:800">22.1<span style="font-size:12px">%</span></div><div style="font-size:10px;color:var(--text-muted)">体脂率</div><div style="font-size:10px;color:var(--accent-dark);font-weight:600;margin-top:2px">↓ -0.3%</div></div>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;padding:14px">
+        <div style="font-size:12px;color:var(--text-light);margin-bottom:6px">💬 AI分析</div>
+        <div style="font-size:13px;line-height:1.6">体重和体脂同步小幅下降，方向正确。继续保持当前频率和饮食自律度，4 周后预计有更明显变化。</div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab" onclick="go('progress','today')"><div class="icon">🏠</div>今天</div>
+    <div class="tab" onclick="go('progress','adventure')"><div class="icon">🗺️</div>冒险</div>
+    <div class="tab active"><div class="icon">📊</div>进度</div>
+    <div class="tab" onclick="go('progress','profile')"><div class="icon">👤</div>我的</div>
+  </div>
+</div>
+
+<!-- ====== PROFILE ====== -->
+<div class="screen" id="profile">
+  <div class="statusbar"><span>9:41</span><div class="right"><span>📶 5G</span><span>🔋</span></div></div>
+  <div class="navbar"><div class="placeholder"></div><div class="title">我的</div><div class="placeholder"></div></div>
+  <div class="content">
+    <div class="profile-hero">
+      <div class="avatar">🦊</div>
+      <div class="name">果冻</div>
+      <div class="level">Lv.3 健身新手</div>
+      <div class="xp-bar"><div class="xp-fill"></div></div>
+      <div class="xp-text">距 Lv.4 还需 240 XP · 累计 510/750</div>
+    </div>
+    <div class="stat-grid">
+      <div class="sg-item"><div class="sg-num" style="color:var(--orange)">🔥1</div><div class="sg-label">连续打卡</div></div>
+      <div class="sg-item"><div class="sg-num" style="color:var(--primary)">1</div><div class="sg-label">完成训练</div></div>
+      <div class="sg-item"><div class="sg-num" style="color:var(--accent-dark)">42min</div><div class="sg-label">总训练时长</div></div>
+    </div>
+    <div class="section-title">🗺️ 冒险进度</div>
+    <div style="background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <span style="font-size:24px">🟢</span>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">新手草原</div>
+          <div style="font-size:11px;color:var(--text-muted)">节点 1/7 · 14% 探索完毕</div>
+        </div>
+      </div>
+      <div style="height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="height:100%;background:var(--accent-dark);border-radius:3px;width:14%"></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">下一站：Day2 有氧燃脂 → 通关Boss解锁力量森林</div>
+    </div>
+    <div class="section-title">🏅 成就徽章 <span style="font-size:12px;color:var(--text-muted);font-weight:400">2/100</span></div>
+    <div class="achievement-grid">
+      <div class="ach-item"><div class="ach-emoji">🎉</div><div class="ach-name">首次训练</div><div class="ach-status" style="color:var(--accent-dark)">已解锁</div></div>
+      <div class="ach-item"><div class="ach-emoji">🔥</div><div class="ach-name">连击1天</div><div class="ach-status" style="color:var(--accent-dark)">已解锁</div></div>
+      <div class="ach-item locked"><div class="ach-emoji">🔥</div><div class="ach-name">连击7天</div><div class="ach-status">6天后</div></div>
+      <div class="ach-item locked"><div class="ach-emoji">💪</div><div class="ach-name">首次PR</div><div class="ach-status">未解锁</div></div>
+      <div class="ach-item locked"><div class="ach-emoji">🗺️</div><div class="ach-name">区域探索</div><div class="ach-status">击败Boss</div></div>
+      <div class="ach-item locked"><div class="ach-emoji">🏆</div><div class="ach-name">百日传奇</div><div class="ach-status">99天后</div></div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab" onclick="go('profile','today')"><div class="icon">🏠</div>今天</div>
+    <div class="tab" onclick="go('profile','adventure')"><div class="icon">🗺️</div>冒险</div>
+    <div class="tab" onclick="go('profile','progress')"><div class="icon">📊</div>进度</div>
+    <div class="tab active"><div class="icon">👤</div>我的</div>
+  </div>
+</div>
+
+</div><!-- /phone -->
+
+<script>
+function go(from,to){
+  document.getElementById(from).classList.remove('active');
+  document.getElementById(to).classList.add('active');
+  document.getElementById(to).scrollTop=0;
+}
+function selectOpt(el){el.parentElement.querySelectorAll('.q-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected')}
+function selectMood(el){el.parentElement.querySelectorAll('.ci-mood').forEach(m=>m.classList.remove('selected'));el.classList.add('selected')}
+function selectTime(el){el.parentElement.querySelectorAll('.ci-time').forEach(t=>t.classList.remove('selected'));el.classList.add('selected')}
+function selectRPE(el){el.parentElement.querySelectorAll('.rpe-pill').forEach(r=>r.classList.remove('selected'));el.classList.add('selected')}
+
+// ====== CHECK-IN STATE ======
+var checkinResult=null;
+// Original plan
+var originalPlan={title:'哑铃卧推',target:'4组 × 10-12次 · 胸肌、三头肌',demo:'🏋️',
+  sets:[{reps:12,weight:7.5,rpe:6,done:true},{reps:12,weight:7.5,rpe:7,done:true},{reps:10,weight:8.5,rpe:null,done:false},{reps:0,weight:0,rpe:null,done:false}],
+  totalEx:5};
+
+function getCheckinState(){
+  var sleep=parseFloat(document.getElementById('sleepSlider').value);
+  var body=parseInt(document.getElementById('bodySlider').value);
+  var sore=parseInt(document.getElementById('soreSlider').value);
+  var moodEls=document.querySelectorAll('#checkinModal .ci-mood');
+  var mood=3;
+  moodEls.forEach(function(m,i){if(m.classList.contains('selected'))mood=i+1});
+  var timeEls=document.querySelectorAll('#checkinModal .ci-time');
+  var time=45;
+  timeEls.forEach(function(t){if(t.classList.contains('selected'))time=parseInt(t.innerText)});
+  return {sleep:sleep,body:body,sore:sore,mood:mood,time:time};
+}
+
+function updateAIAdvice(){
+  var s=getCheckinState();
+  var fatigue=0;
+  if(s.sleep<6)fatigue+=2; else if(s.sleep<7)fatigue+=1;
+  if(s.body<=2)fatigue+=2; else if(s.body==3)fatigue+=1;
+  if(s.sore>=4)fatigue+=2; else if(s.sore>=3)fatigue+=1;
+  var advice='',changes=[],level='normal',plan=JSON.parse(JSON.stringify(originalPlan));
+
+  if(fatigue>=3){
+    level='danger';
+    advice='状态偏差较大，今天改为主动恢复日。做拉伸+泡沫轴放松，让身体充分恢复，明天状态回来了再正式训练。';
+    changes=['训练类型 <span class="arrow">→</span> 上肢力量 → 主动恢复','预计时长 <span class="arrow">→</span> 45min → 20min','动作内容 <span class="arrow">→</span> 全部替换为拉伸放松'];
+    plan={title:'全身拉伸放松',target:'泡沫轴+静态拉伸 · 主动恢复日',demo:'🧘',
+      sets:[{reps:'泡沫轴',weight:'大腿+背部',rpe:null,done:false},{reps:'拉伸',weight:'肩颈+胸椎',rpe:null,done:false},{reps:'拉伸',weight:'髋部+腿部',rpe:null,done:false}],
+      totalEx:1,isRecovery:true};
+  }else if(s.time<=15){
+    level='warning';
+    advice='时间有限，帮你精简到2个核心动作，减组保质。浓缩训练15分钟也能有效果！';
+    changes=['动作数量 <span class="arrow">→</span> 5个 → 2个核心动作','组数 <span class="arrow">→</span> 4组 → 3组','预计时长 <span class="arrow">→</span> 45min → 15min'];
+    plan.sets=plan.sets.slice(0,3).map(function(x){x.reps=x.reps>0?x.reps:10;x.weight=x.weight>0?x.weight:7.5;x.done=false;return x});
+    plan.totalEx=2;
+  }else if(s.time<=30){
+    level='warning';
+    advice='时间稍有紧张，去掉了辅助动作，专注3个核心力量动作。保质不保量。';
+    changes=['动作数量 <span class="arrow">→</span> 5个 → 3个','预计时长 <span class="arrow">→</span> 45min → 30min','辅助动作 <span class="arrow">→</span> 已移除'];
+    plan.totalEx=3;
+    plan.sets=plan.sets.slice(0,3).map(function(x){x.reps=x.reps>0?x.reps:10;x.weight=x.weight>0?x.weight:7.5;x.done=false;return x});
+  }else if(fatigue>=2){
+    level='warning';
+    if(s.sore>=3){
+      advice='上肢酸痛较明显，训练重量降低15%，组数减1组。避免代偿受伤，质量优先。';
+      changes=['训练重量 <span class="arrow">→</span> 降低15%（7.5→6.5kg）','组数 <span class="arrow">→</span> 4组 → 3组','额外增加 <span class="arrow">→</span> 拉伸放松环节'];
+      plan.sets=[{reps:10,weight:6.5,rpe:null,done:false},{reps:10,weight:6.5,rpe:null,done:false},{reps:10,weight:6.5,rpe:null,done:false}];
+    }else{
+      advice='睡眠不足，训练容量降低20%，RPE控制在7以内。质量优先于数量，别硬撑。';
+      changes=['训练容量 <span class="arrow">→</span> 降低20%','RPE上限 <span class="arrow">→</span> 不超过7','组间休息 <span class="arrow">→</span> +30秒'];
+      plan.sets=plan.sets.map(function(x){x.weight=x.weight>0?Math.round(x.weight*0.8*10)/10:0;x.done=false;return x});
+    }
+  }else if(s.body>=4&&s.sore<=2&&s.sleep>=7&&s.mood>=4){
+    level='normal';
+    advice='状态超棒！今天可以试着加重，哑铃卧推+1kg，多加1组核心挑战。冲一把！💪';
+    changes=['训练重量 <span class="arrow">→</span> ↑加重（7.5→8.5kg）','动作数量 <span class="arrow">→</span> 保持5个','额外增加 <span class="arrow">→</span> 1组核心挑战'];
+    plan.sets=[{reps:12,weight:8.5,rpe:null,done:false},{reps:10,weight:8.5,rpe:null,done:false},{reps:10,weight:8.5,rpe:null,done:false},{reps:10,weight:8.5,rpe:null,done:false}];
+  }else{
+    level='normal';
+    advice='状态不错，保持原计划即可。注意控制RPE在7-8之间。今天完成上肢力量训练，预计 45 分钟。';
+    changes=['训练计划 <span class="arrow">→</span> 保持不变','预计时长 <span class="arrow">→</span> 45min'];
+  }
+
+  // Update DOM
+  var box=document.getElementById('aiAdviceBox');
+  box.className='ci-adjusted'+(level==='warning'?' warning':'')+(level==='danger'?' danger':'');
+  document.getElementById('aiAdviceText').innerHTML='<strong>AI 教练调整建议</strong><br>'+advice;
+  document.getElementById('aiChangeList').innerHTML=changes.map(function(c){return '<div class="change-item">'+c+'</div>'}).join('');
+  checkinResult={state:s,advice:advice,changes:changes,plan:plan,level:level};
+}
+
+// Render training screen based on check-in result
+function renderTraining(){
+  var plan=checkinResult?checkinResult.plan:originalPlan;
+  var changes=checkinResult?checkinResult.changes:[];
+  var banner=document.getElementById('trainAdjustBanner');
+  var detail=document.getElementById('trainAdjustDetail');
+  if(checkinResult && checkinResult.level!=='normal' || (changes.length>0 && changes[0].indexOf('保持不变')<0)){
+    banner.style.display='flex';
+    detail.innerHTML=changes.slice(0,3).map(function(c){return '• '+c.replace(/<[^>]+>/g,'')}).join('<br>');
+  }else{
+    banner.style.display='none';
+  }
+  document.getElementById('exName').innerText=plan.title;
+  document.getElementById('exTarget').innerText='目标：'+plan.target;
+  document.getElementById('exDemo').innerText=plan.demo;
+  // Render sets
+  var sl=document.getElementById('setList');
+  sl.innerHTML='';
+  plan.sets.forEach(function(set,i){
+    var isRecovery=plan.isRecovery;
+    var numText=set.done?'✓':(i+1);
+    var stateClass=set.done?'done':'';
+    var activeClass=(!set.done && i===plan.sets.filter(function(s){return s.done}).length)?' style="border:2px solid var(--accent-dark)"':'';
+    var opacity=(!set.done && i>plan.sets.filter(function(s){return s.done}).length)?' style="opacity:.5"':'';
+    if(isRecovery){
+      sl.innerHTML+='<div class="set-row"'+activeClass+'><div class="set-num">'+(i+1)+'</div><div class="set-input" style="justify-content:flex-start;gap:12px"><span style="font-size:14px;font-weight:600">'+set.reps+'</span><span style="color:#ccc">·</span><span style="font-size:14px;font-weight:600">'+set.weight+'</span></div><div style="font-size:10px;color:var(--text-muted)">待完成</div></div>';
+    }else{
+      var repsVal=set.reps>0?set.reps:'--';
+      var weightVal=set.weight>0?set.weight:'--';
+      var weightUnit=checkinResult&&checkinResult.level==='normal'&&checkinResult.state.body>=4&&checkinResult.state.sore<=2&&checkinResult.state.sleep>=7&&checkinResult.state.mood>=4&&i<2?'kg ↑':'kg';
+      var rpeText=set.rpe?('RPE '+set.rpe):'待完成';
+      var rpeColor=set.rpe?('var(--'+(set.rpe<=6?'accent-dark':set.rpe<=7?'8BC34A':'FFC107')+')'):'var(--text-muted)';
+      sl.innerHTML+='<div class="set-row '+stateClass+'"'+(set.done?'':(i===plan.sets.filter(function(s){return s.done}).length)?' style="border:2px solid var(--accent-dark)"':(i>plan.sets.filter(function(s){return s.done}).length)?' style="opacity:.5"':'')+'><div class="set-num">'+numText+'</div><div class="set-input"><div class="set-field"><div class="val"'+(set.done?'':' style="color:'+(set.reps>0?'var(--accent-dark)':'var(--text-muted)')+'"')+'>'+repsVal+'</div><div class="unit">'+(isRecovery?'': '次')+'</div></div><div style="color:#ccc">×</div><div class="set-field"><div class="val"'+(set.done?'':' style="color:'+(set.weight>0?'var(--accent-dark)':'var(--text-muted)')+'"')+'>'+weightVal+'</div><div class="unit">'+weightUnit+'</div></div></div><div style="font-size:10px;font-weight:600;color:'+rpeColor+'">'+rpeText+'</div></div>';
+    }
+  });
+  // Update progress header
+  var progressEl=document.querySelector('#training .th-progress');
+  if(progressEl)progressEl.innerText='动作 1/'+plan.totalEx;
+  // Update button text based on sets
+  var trainBtn=document.querySelector('#training .btn-accent');
+  if(trainBtn){
+    var firstActive=-1;
+    plan.sets.forEach(function(s,i){if(!s.done&&firstActive===-1)firstActive=i});
+    if(firstActive>=0)trainBtn.innerText='✓ 完成第'+(firstActive+1)+'组 / 共'+plan.sets.length+'组';
+    else trainBtn.innerText='✓ 全部完成！';
+  }
+}
+
+// Check-in modal
+function openCheckin(){
+  document.getElementById('checkinModal').classList.add('show');
+  updateAIAdvice();
+}
+function closeCheckin(){
+  document.getElementById('checkinModal').classList.remove('show');
+  renderTraining();
+  go('today','training');
+}
+function skipCheckin(){
+  document.getElementById('checkinModal').classList.remove('show');
+  checkinResult=null;
+  renderTraining();
+  go('today','training');
+}
+
+// Map tooltip
+function showMapTooltip(type,title,desc,state){
+  var tt=document.getElementById('mapTooltip');
+  document.getElementById('mtType').innerText=type;
+  document.getElementById('mtTitle').innerText=title;
+  document.getElementById('mtDesc').innerText=desc;
+  var btn=document.getElementById('mtBtn');
+  if(state==='done'){btn.innerText='查看记录';btn.style.background='#78909C'}
+  else if(state==='current'){btn.innerText='开始挑战';btn.style.background='var(--primary)'}
+  else{btn.innerText='未解锁';btn.style.background='#ccc'}
+  tt.classList.add('show');
+}
+function hideMapTooltip(){document.getElementById('mapTooltip').classList.remove('show')}
+
+// Training set completion (dynamic)
+function completeSet(){
+  var rows=document.querySelectorAll('#training .set-row');
+  var btn=document.querySelector('#training .btn-accent');
+  // Find the first non-done row (the current active one)
+  var activeIdx=-1;
+  for(var i=0;i<rows.length;i++){
+    if(!rows[i].classList.contains('done')){activeIdx=i;break}
+  }
+  if(activeIdx===-1){go('training','summary');return}
+  // Mark current as done
+  rows[activeIdx].classList.add('done');
+  rows[activeIdx].style.border='';
+  rows[activeIdx].style.opacity='1';
+  var numEl=rows[activeIdx].querySelector('.set-num');
+  if(numEl)numEl.innerText='✓';
+  // Check if all done
+  var allDone=true;
+  for(var j=0;j<rows.length;j++){if(!rows[j].classList.contains('done')){allDone=false;break}}
+  if(allDone){
+    btn.innerText='✓ 全部完成！';
+    setTimeout(function(){go('training','summary')},600);
+  }else{
+    // Activate next row
+    for(var k=activeIdx+1;k<rows.length;k++){
+      if(!rows[k].classList.contains('done')){
+        rows[k].style.opacity='1';
+        rows[k].style.border='2px solid var(--accent-dark)';
+        if(btn)btn.innerText='✓ 完成第'+(k+1)+'组 / 共'+rows.length+'组';
+        break;
+      }
+    }
+  }
+}
+
+// Training timer
+let timerSec=754;
+setInterval(()=>{
+  timerSec++;
+  var m=String(Math.floor(timerSec/60)).padStart(2,'0');
+  var s=String(timerSec%60).padStart(2,'0');
+  var el=document.getElementById('trainTimer');
+  if(el)el.innerText=m+':'+s;
+},1000);
+
+// Simulate push notification on Today screen
+setTimeout(()=>{
+  var push=document.getElementById('pushNotif');
+  var todayScreen=document.getElementById('today');
+  if(todayScreen.classList.contains('active')){
+    push.classList.add('show');
+    setTimeout(()=>push.classList.remove('show'),8000);
+  }
+},3000);
+</script>
+</body>
+</html>
