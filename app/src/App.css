@@ -2,6 +2,12 @@
    日常界面：暖白底 / 白卡 / 墨色主卡 / 荧光绿 accent / Inter / 圆角 24
    国家公园画报风格只保留在分享产物（.receipt-poster / @media print）里。 */
 
+/* 基础重置：手机端必须铺满屏幕、padding/border 计入宽度，否则导航与卡片永远对不齐 */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { min-height: 100vh; }
+
 .app {
   /* ATLAS 令牌 */
   --bg: #f3f1ea;
