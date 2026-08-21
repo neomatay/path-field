@@ -157,14 +157,14 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
     <div className="training">
       <header className="training-head">
         <div>
-          <p className="label">
+          <p className="kicker">
             {isRecovery ? '恢复活动' : session.selectedVariant === 'short' ? '短版训练' : '完整训练'}
           </p>
-          <p className="body">
+          <p className="body" style={{ margin: '6px 0 0' }}>
             {isRecovery ? '低压力活动，随时可结束。' : '练完一组点 ✓，间歇倒计时自动开始。'}
           </p>
         </div>
-        <div className="session-timer" role="timer" aria-label="已训练时长">
+        <div className="timer" role="timer" aria-label="已训练时长">
           {fmtClock(elapsed)}
         </div>
       </header>
@@ -181,12 +181,12 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
           const subs = substitutionsFor(block.exerciseId)
           // 退阶链（regressionsFor）：同组里难度更低的变体，标出来方便状态差时降档
           const easierIds = new Set(regressionsFor(block.exerciseId).map((r) => r.id))
+          const target = block.plannedReps ?? targetRepsOf(program, block.exerciseId)
           return (
-            <section key={bi} className={block.skipped ? 'block skipped' : 'block'}>
-              <div className="block-head">
-                <h2>{ex?.name ?? block.exerciseId}</h2>
-                <span className="meta">目标 {block.plannedReps ?? targetRepsOf(program, block.exerciseId)}</span>
-              </div>
+            <section key={bi} className="exercise-card">
+              <p className="ec-meta">动作 {bi + 1} / {blocks.length}{originalId !== undefined ? ' · 已替换' : ''}</p>
+              <h2>{ex?.name ?? block.exerciseId}</h2>
+              <p className="ec-target">目标 {target}</p>
 
               {ex?.cues && <p className="cues">{ex.cues}</p>}
 
@@ -201,7 +201,7 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
               )}
 
               {block.skipped ? (
-                <p className="meta">
+                <p className="meta" style={{ color: '#b9bdb6' }}>
                   已跳过。
                   <button type="button" className="ghost small" onClick={() => setBlocks((prev) => prev.map((b, i) => (i !== bi ? b : { ...b, skipped: false, skipReason: undefined })))}>
                     恢复记录
@@ -209,41 +209,53 @@ export function Training({ program, session, history, onChange, onFinish }: Prop
                 </p>
               ) : (
                 <>
-                  <div className="set-grid head">
-                    <span>组</span><span>重量 kg</span><span>次数</span><span>RPE</span><span>完成</span>
-                  </div>
-                  {block.sets.map((s, si) => (
-                    <div key={si} className={s.doneAt !== undefined ? 'set-grid done' : 'set-grid'}>
-                      <span className="meta">{si + 1}</span>
-                      <input
-                        type="number" inputMode="decimal" min={0} step={2.5}
-                        value={s.weightKg ?? ''} placeholder="—"
-                        onChange={(e) => updateSet(bi, si, { weightKg: e.target.value === '' ? undefined : Number(e.target.value) })}
-                      />
-                      <input
-                        type="number" inputMode="numeric" min={0}
-                        value={s.reps ?? ''} placeholder={block.plannedReps ?? targetRepsOf(program, block.exerciseId)}
-                        onChange={(e) => updateSet(bi, si, { reps: e.target.value === '' ? undefined : Number(e.target.value) })}
-                      />
-                      <input
-                        type="number" inputMode="numeric" min={1} max={10}
-                        value={s.rpe ?? ''} placeholder="—"
-                        onChange={(e) => updateSet(bi, si, { rpe: e.target.value === '' ? undefined : Number(e.target.value) })}
-                      />
-                      <button
-                        type="button"
-                        className={s.doneAt !== undefined ? 'set-check checked' : 'set-check'}
-                        aria-pressed={s.doneAt !== undefined}
-                        aria-label={`第 ${si + 1} 组完成`}
-                        onClick={() => toggleDone(bi, si)}
-                      >
-                        ✓
-                      </button>
-                    </div>
-                  ))}
+                  <table className="set-table">
+                    <thead>
+                      <tr><th>组</th><th>重量</th><th>次数</th><th>RPE</th><th>完成</th></tr>
+                    </thead>
+                    <tbody>
+                      {block.sets.map((s, si) => (
+                        <tr key={si} className={s.doneAt !== undefined ? 'set-row done' : 'set-row'}>
+                          <td className="set-n">{si + 1}</td>
+                          <td>
+                            <input
+                              type="number" inputMode="decimal" min={0} step={2.5}
+                              value={s.weightKg ?? ''} placeholder="—"
+                              onChange={(e) => updateSet(bi, si, { weightKg: e.target.value === '' ? undefined : Number(e.target.value) })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number" inputMode="numeric" min={0}
+                              value={s.reps ?? ''} placeholder={target}
+                              onChange={(e) => updateSet(bi, si, { reps: e.target.value === '' ? undefined : Number(e.target.value) })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number" inputMode="numeric" min={1} max={10}
+                              value={s.rpe ?? ''} placeholder="—"
+                              onChange={(e) => updateSet(bi, si, { rpe: e.target.value === '' ? undefined : Number(e.target.value) })}
+                            />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className={s.doneAt !== undefined ? 'set-complete checked' : 'set-complete'}
+                              aria-pressed={s.doneAt !== undefined}
+                              aria-label={`第 ${si + 1} 组完成`}
+                              onClick={() => toggleDone(bi, si)}
+                            >
+                              {s.doneAt !== undefined ? '✓' : '完成'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                   <div className="block-actions">
-                    <button type="button" className="ghost" onClick={() => addSet(bi)}>加一组</button>
-                    <button type="button" className="ghost" onClick={() => skip(bi, '个人选择')}>跳过</button>
+                    <button type="button" className="ghost small" onClick={() => addSet(bi)}>加一组</button>
+                    <button type="button" className="ghost small" onClick={() => skip(bi, '个人选择')}>跳过</button>
                   </div>
 
                   <div className="subs">

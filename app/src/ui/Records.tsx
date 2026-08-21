@@ -93,9 +93,12 @@ export function Records({ sessions, programs, bodyMetrics, mission, evidences, d
   if (sessions.length === 0 && bodyMetrics.length === 0 && evidences.length === 0) {
     return (
       <div className="records">
-        <header className="page-head">
-          <p className="label">RECORDS</p>
-          <h1 className="page-title">记录</h1>
+        <header className="topline">
+          <div className="tl-text">
+            <p className="kicker">RECORDS</p>
+            <h2>记录</h2>
+          </div>
+          <div className="avatar">录</div>
         </header>
         <p className="body">还没有记录。完成第一次训练后，这里就是你的事实清单。</p>
       </div>
@@ -106,27 +109,19 @@ export function Records({ sessions, programs, bodyMetrics, mission, evidences, d
 
   return (
     <div className="records">
-      <header className="page-head">
-        <p className="label">RECORDS</p>
-        <h1 className="page-title">记录</h1>
+      <header className="topline">
+        <div className="tl-text">
+          <p className="kicker">RECORDS</p>
+          <h2>记录</h2>
+        </div>
+        <div className="avatar">录</div>
       </header>
 
-      <section className="stat-line">
-        <span className="stat-line-item">
-          <span className="stat-line-value">{sorted.length}</span>
-          <span className="stat-line-label">次训练</span>
-        </span>
-        <span className="stat-line-item">
-          <span className="stat-line-value">{totalCapacity > 0 ? Math.round(totalCapacity) : '—'}</span>
-          <span className="stat-line-label">累计容量 kg · {totalSets} 组</span>
-        </span>
-        <span className="stat-line-item">
-          <span className="stat-line-value">
-            {trend === undefined ? '—' : `${trend.deltaPct >= 0 ? '+' : ''}${trend.deltaPct}%`}
-          </span>
-          <span className="stat-line-label">近 4 周</span>
-        </span>
-      </section>
+      <div className="row">
+        <div className="metric"><strong>{sorted.length}</strong><span>次训练</span></div>
+        <div className="metric"><strong>{totalCapacity > 0 ? Math.round(totalCapacity) : '—'}</strong><span>累计容量 kg · {totalSets} 组</span></div>
+        <div className="metric"><strong>{trend === undefined ? '—' : `${trend.deltaPct >= 0 ? '+' : ''}${trend.deltaPct}%`}</strong><span>近 4 周</span></div>
+      </div>
 
       <nav className="subtabs">
         {([['sessions', '训练'], ['body', '身体'], ['best', '最佳'], ['profile', '档案']] as Array<[SubTab, string]>).map(([key, label]) => (
@@ -296,7 +291,7 @@ function ProfileTab({
 
   return (
     <section className="tab-panel">
-      <div>
+      <div className="card">
         <p className="label">参与前筛查</p>
         {screening === undefined ? (
           <p className="body">还没做过筛查。「重新选择路径」回到入口时会先出现一次（7 问，约半分钟）。</p>
@@ -307,7 +302,7 @@ function ProfileTab({
         )}
       </div>
 
-      <div>
+      <div className="card">
         <p className="label">Mission 信息</p>
         <p className="body">
           {mission.title}
@@ -375,7 +370,7 @@ function ProfileTab({
         )}
       </div>
 
-      <div>
+      <div className="card">
         <p className="label">进阶决策</p>
         {decisions.length === 0 ? (
           <p className="body">还没有决策记录。练完出现「进阶候选」时，你的每次选择都会记在这里。</p>

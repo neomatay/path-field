@@ -35,19 +35,23 @@ export function Parq({ onSubmit }: Props) {
 
   if (done) {
     return (
-      <section className="parq">
-        <p className="label">筛查结果 · 已记录</p>
+      <section className="q-card">
+        <p className="q-label">筛查结果 · 已记录</p>
+        <p className="q-title">
+          {positives === 0
+            ? '7 项均为「否」'
+            : `${positives} 项「是」`}
+        </p>
         {positives === 0 ? (
           <p className="body">
-            7 项均为「否」。当前没有已知的、需要先咨询医生的信号——可以按自己的节奏开始。
+            当前没有已知的、需要先咨询医生的信号——可以按自己的节奏开始。
           </p>
         ) : (
           <>
             <p className="body">
-              你标记了 {positives} 项「是」。这不代表不能训练，只是建议先咨询医生，
-              再决定从哪个强度开始。
+              这不代表不能训练，只是建议先咨询医生，再决定从哪个强度开始。
             </p>
-            <p className="parq-note">
+            <p className="explain">
               依据「记录事实、不评判」：筛查结果不会拦截你。你可以从短版或恢复版开始，
               并在训练签到里标记需要注意的部位。
             </p>
@@ -61,20 +65,25 @@ export function Parq({ onSubmit }: Props) {
   }
 
   return (
-    <section className="parq card">
-      <p className="label">开始前的 7 个问题 · PAR-Q+</p>
+    <section className="q-card">
+      <p className="q-label">开始前的 7 个问题 · PAR-Q+</p>
+      <p className="q-title">参与前一次性筛查</p>
       <p className="body">
-        开始之前的一次性筛查。答案只作为事实记录，不影响你能用哪些功能。
-        （{answeredCount}/{QUESTIONS.length} 已答）
+        答案只作为事实记录，不影响你能用哪些功能。（{answeredCount}/{QUESTIONS.length} 已答）
       </p>
+      <div className="progress-dots">
+        {QUESTIONS.map((_, i) => (
+          <span key={i} className={answers[i] !== null ? 'active' : ''} />
+        ))}
+      </div>
       <ol className="parq-list">
         {QUESTIONS.map((q, i) => (
-          <li key={i} className="parq-item">
-            <p className="parq-q">{q}</p>
-            <div className="parq-options">
+          <li key={i}>
+            <p className="body" style={{ fontWeight: 700, margin: '0 0 8px' }}>{i + 1}. {q}</p>
+            <div className="q-options">
               <button
                 type="button"
-                className={answers[i] === true ? 'chip selected' : 'chip'}
+                className={answers[i] === true ? 'q-opt selected' : 'q-opt'}
                 aria-pressed={answers[i] === true}
                 onClick={() => setAnswer(i, true)}
               >
@@ -82,7 +91,7 @@ export function Parq({ onSubmit }: Props) {
               </button>
               <button
                 type="button"
-                className={answers[i] === false ? 'chip selected' : 'chip'}
+                className={answers[i] === false ? 'q-opt selected' : 'q-opt'}
                 aria-pressed={answers[i] === false}
                 onClick={() => setAnswer(i, false)}
               >

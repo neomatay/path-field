@@ -2,8 +2,12 @@
  * 单次收据：数字摘要（时长/组数/容量/平均RPE/与上次对比）+ 事实要点 + 新纪录印章
  * + 进阶候选（KB-PROG-02）：候选只是候选，采用与否是 Decision，由用户选择后落库。
  * 只陈述发生了什么，不做能力判断。
+ *
+ * 画报风成果海报：屏幕外隐藏的 .receipt-poster 节点，点"保存成果海报"用 html-to-image 导出 PNG。
+ * 海报只含事实（时长/组数/容量/RPE、与上次对比、PR、逐组、不适提示、日期+mission），不含进阶决策交互。
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { toPng } from 'html-to-image'
 import type { Decision, Program, Session, UserChoice } from '../core/types'
 import { EXERCISES_BY_ID } from '../data/exercises'
 import { avgRpeOf, capacityOf, durationOf, newPRsOf, recordedSetsOf, type TopSet } from '../core/stats'
@@ -55,42 +59,6 @@ function buildCandidateDecision(c: ProgressionCandidate, choice: UserChoice): De
   }
 }
 
-/** 单个候选的决策 UI：三选 chips；选定后显示结果，不可改（再改会以新 Decision 落库） */
-function ProgressionDecision({
-  candidate,
-  choice,
-  onChoose,
-}: {
-  candidate: ProgressionCandidate
-  choice: UserChoice | undefined
-  onChoose: (choice: UserChoice) => void
-}) {
-  const name = EXERCISES_BY_ID[candidate.exerciseId]?.name ?? candidate.exerciseId
-  return (
-    <div className="prog-decision">
-      <p className="prog-reason">
-        <strong>{name}</strong>：{candidate.reason}
-      </p>
-      {choice === undefined ? (
-        <div className="parq-options">
-          {CHOICES.map(({ choice: c, label }) => (
-            <button
-              key={c}
-              type="button"
-              className="chip"
-              onClick={() => onChoose(c)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <p className="meta">已记录：{CHOICE_LABEL[choice]}。</p>
-      )}
-    </div>
-  )
-}
-
 /** 候选决策三选（KB-PROG-02：采用由你决定） */
 const CHOICES: Array<{ choice: UserChoice; label: string }> = [
   { choice: 'accepted', label: '采用' },
@@ -104,6 +72,42 @@ const CHOICE_LABEL: Record<UserChoice, string> = {
   declined: '不采用',
   paused: '暂停',
   deferred: '下次再说',
+}
+
+/** 单个候选的决策 UI：三选按钮；选定后显示结果，不可改（再改会以新 Decision 落库） */
+function ProgressionDecision({
+  candidate,
+  choice,
+  onChoose,
+}: {
+  candidate: ProgressionCandidate
+  choice: UserChoice | undefined
+  onChoose: (choice: UserChoice) => void
+}) {
+  const name = EXERCISES_BY_ID[candidate.exerciseId]?.name ?? candidate.exerciseId
+  return (
+    <div className="change-card">
+      <p className="cc-reason">
+        <strong>{name}</strong>：{candidate.reason}
+      </p>
+      {choice === undefined ? (
+        <div className="change-actions">
+          {CHOICES.map(({ choice: c, label }) => (
+            <button
+              key={c}
+              type="button"
+              className={c === 'accepted' ? 'primary' : ''}
+              onClick={() => onChoose(c)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="meta">已记录：{CHOICE_LABEL[choice]}。</p>
+      )}
+    </div>
+  )
 }
 
 export function Receipt({ session, history, program, onDone, onDecide }: Props) {
@@ -133,96 +137,108 @@ export function Receipt({ session, history, program, onDone, onDecide }: Props) 
       ? Math.round(((capacity - lastCapacity) / lastCapacity) * 100)
       : undefined
 
+  const posterRef = useRef<HTMLDivElement>(null)
+  const exporting = useRef(false)
+  const exportPoster = async () => {
+    if (posterRef.current === null || exporting.current) return
+    exporting.current = true
+    try {
+      const dataUrl = await toPng(posterRef.current, { pixelRatio: 2, cacheBust: true })
+      const a = document.createElement('a')
+      a.download = `训练收据-${new Date(session.startedAt).toLocaleDateString('zh-CN')}.png`
+      a.href = dataUrl
+      a.click()
+    } catch (e) {
+      console.error('成果海报导出失败', e)
+    } finally {
+      exporting.current = false
+    }
+  }
+
+  const sessionDate = new Date(session.startedAt).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' })
+
   return (
     <div className="receipt">
-      <header>
-        <p className="label">训练收据</p>
-        <h1>已记录</h1>
+      <header className="topline">
+        <div className="tl-text">
+          <p className="kicker">训练收据</p>
+          <h2>已记录</h2>
+        </div>
+        <div className="avatar">据</div>
       </header>
 
-      <section className="stat-row">
-        <div className="stat">
-          <span className="stat-value">{durationMin ?? '—'}</span>
-          <span className="stat-label">分钟</span>
-        </div>
-        <div className="stat">
-          <span className="stat-value">{sets}</span>
-          <span className="stat-label">组</span>
-        </div>
-        <div className="stat">
-          <span className="stat-value">{capacity > 0 ? Math.round(capacity) : '—'}</span>
-          <span className="stat-label">容量 kg</span>
-        </div>
-        <div className="stat">
-          <span className="stat-value">{avgRpe !== undefined ? avgRpe.toFixed(1) : '—'}</span>
-          <span className="stat-label">平均 RPE</span>
-        </div>
-      </section>
+      <div className="row">
+        <div className="metric"><strong>{durationMin ?? '—'}</strong><span>分钟</span></div>
+        <div className="metric"><strong>{sets}</strong><span>组</span></div>
+        <div className="metric"><strong>{capacity > 0 ? Math.round(capacity) : '—'}</strong><span>容量 kg</span></div>
+        <div className="metric"><strong>{avgRpe !== undefined ? avgRpe.toFixed(1) : '—'}</strong><span>平均 RPE</span></div>
+      </div>
 
       {deltaPct !== undefined && (
-        <p className="body">
+        <p className="body" style={{ margin: 0 }}>
           容量比上次同类训练{deltaPct >= 0 ? ` +${deltaPct}%` : ` ${deltaPct}%`}。
         </p>
       )}
 
       {prs.length > 0 && (
-        <section className="pr-stamps">
+        <div className="pr-stamps">
           {prs.map((p) => (
             <div key={p.exerciseId} className="pr-stamp">
-              <span className="pr-name">新纪录</span>
+              <span className="pr-name">新纪录 · {EXERCISES_BY_ID[p.exerciseId]?.name ?? p.exerciseId}</span>
               <span className="meta">
-                {EXERCISES_BY_ID[p.exerciseId]?.name ?? p.exerciseId}
-                {p.topSet.weightKg !== undefined ? ` ${p.topSet.weightKg}kg x ${p.topSet.reps}` : ` ${p.topSet.reps} 次`}
+                {p.topSet.weightKg !== undefined ? `${p.topSet.weightKg}kg × ${p.topSet.reps}` : `${p.topSet.reps} 次`}
               </span>
             </div>
           ))}
-        </section>
+        </div>
       )}
 
       {recorded.length > 0 && (
         <section>
           <p className="label">动作 · 逐组记录</p>
-          <ul className="evidence">
+          <div className="checklist">
             {recorded.map((b) => {
               const doneSets = b.sets.filter((s) => (s.reps ?? 0) > 0 || s.doneAt !== undefined)
               const top = topSetOf(session, b.exerciseId)
               return (
-                <li key={b.exerciseId} className="fact">
-                  <span className="marker ring" />
-                  {EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}
-                  <span className="meta">
-                    {' '}· {doneSets.length} 组
-                    {top !== undefined && (
-                      <> · 最高 {top.weightKg !== undefined ? `${top.weightKg}kg x ${top.reps}` : `${top.reps} 次`}</>
-                    )}
-                  </span>
-                  <ul className="set-list">
-                    {doneSets.map((s, i) => (
-                      <li key={i} className={s.doneAt !== undefined ? 'set-row done' : 'set-row'}>
-                        <span className="meta">
-                          第{s.setIndex + 1}组 · {s.weightKg !== undefined ? `${s.weightKg}kg x ${s.reps ?? '?'}` : `${s.reps ?? '?'} 次`}
+                <div key={b.exerciseId} className="check">
+                  <div className="tick done">{doneSets.length}</div>
+                  <div className="text">
+                    <b>{EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}</b>
+                    <span>
+                      {doneSets.length} 组
+                      {top !== undefined && (
+                        <> · 最高 {top.weightKg !== undefined ? `${top.weightKg}kg × ${top.reps}` : `${top.reps} 次`}</>
+                      )}
+                    </span>
+                    <ul className="set-list">
+                      {doneSets.map((s, i) => (
+                        <li key={i} className={s.doneAt !== undefined ? 'set-row done' : 'set-row'}>
+                          第{s.setIndex + 1}组 · {s.weightKg !== undefined ? `${s.weightKg}kg × ${s.reps ?? '?'}` : `${s.reps ?? '?'} 次`}
                           {s.rpe !== undefined ? ` @RPE${s.rpe}` : ''}
                           {s.doneAt !== undefined ? ' · ✓' : ''}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               )
             })}
             {skipped.map((b) => (
-              <li key={b.exerciseId} className="fact">
-                <span className="marker ring" />
-                {EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}
-                <span className="meta"> · 已跳过</span>
-              </li>
+              <div key={b.exerciseId} className="check">
+                <div className="tick">—</div>
+                <div className="text">
+                  <b>{EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}</b>
+                  <span>已跳过</span>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
       )}
 
       {session.checkOut.discomfort === 'noticeable' && (
-        <p className="safety caution">结束时报告了不适：相关动作下次不作为加重依据。</p>
+        <p className="safety">结束时报告了不适：相关动作下次不作为加重依据。</p>
       )}
       {session.checkOut.discomfort === 'urgentSignal' && (
         <p className="safety urgent">结束时报告了异常信号：请暂停高强度训练，必要时寻求专业支持。</p>
@@ -245,7 +261,70 @@ export function Receipt({ session, history, program, onDone, onDecide }: Props) 
         </section>
       )}
 
+      <button type="button" className="ghost" onClick={exportPoster}>保存成果海报</button>
       <button type="button" className="primary" onClick={onDone}>回到今天</button>
+
+      {/* 成果海报节点：屏幕外隐藏，导出时 html-to-image 取像 */}
+      <div className="receipt-poster" ref={posterRef} aria-hidden="true">
+        <div className="rp-brand">PATH / FIELD</div>
+        <h1 className="rp-title">训练收据</h1>
+        <p className="rp-date">{sessionDate}</p>
+        <div className="rp-stats">
+          <div className="rp-stat"><b>{durationMin ?? '—'}</b><span>分钟</span></div>
+          <div className="rp-stat"><b>{sets}</b><span>组</span></div>
+          <div className="rp-stat"><b>{capacity > 0 ? Math.round(capacity) : '—'}</b><span>容量 kg</span></div>
+          <div className="rp-stat"><b>{avgRpe !== undefined ? avgRpe.toFixed(1) : '—'}</b><span>平均 RPE</span></div>
+        </div>
+
+        {deltaPct !== undefined && (
+          <p className="rp-date">容量比上次同类训练{deltaPct >= 0 ? ` +${deltaPct}%` : ` ${deltaPct}%`}。</p>
+        )}
+
+        <p className="rp-section-label">动作记录</p>
+        <ul className="rp-list">
+          {recorded.map((b) => {
+            const top = topSetOf(session, b.exerciseId)
+            const doneSets = b.sets.filter((s) => (s.reps ?? 0) > 0 || s.doneAt !== undefined)
+            return (
+              <li key={b.exerciseId}>
+                {EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}
+                <span className="meta"> · {doneSets.length} 组 · 最高 {top !== undefined ? (top.weightKg !== undefined ? `${top.weightKg}kg × ${top.reps}` : `${top.reps} 次`) : '—'}</span>
+              </li>
+            )
+          })}
+          {skipped.map((b) => (
+            <li key={b.exerciseId}>
+              {EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}
+              <span className="meta"> · 已跳过</span>
+            </li>
+          ))}
+        </ul>
+
+        {prs.length > 0 && (
+          <>
+            <p className="rp-section-label">新纪录</p>
+            <div>
+              {prs.map((p) => (
+                <span key={p.exerciseId} className="rp-pr">
+                  {EXERCISES_BY_ID[p.exerciseId]?.name ?? p.exerciseId} {p.topSet.weightKg !== undefined ? `${p.topSet.weightKg}kg×${p.topSet.reps}` : `${p.topSet.reps}`}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+
+        {session.checkOut.discomfort === 'noticeable' && (
+          <p className="rp-date">结束时报告了不适：相关动作下次不作为加重依据。</p>
+        )}
+        {session.checkOut.discomfort === 'urgentSignal' && (
+          <p className="rp-date">结束时报告了异常信号：请暂停高强度训练，必要时寻求专业支持。</p>
+        )}
+
+        <div className="rp-foot">
+          <span>PATH / FIELD</span>
+          <span>{sessionDate}</span>
+        </div>
+      </div>
     </div>
   )
 }

@@ -43,6 +43,8 @@ const EVIDENCE_LABEL: Record<EvidenceLevel, string> = {
   inferred: '推断',
 }
 
+const WEEKDAY_LABEL = ['一', '二', '三', '四', '五', '六', '日']
+
 export function Journey({ mission, program, sessions, programs, sessionsDone, programSessions }: Props) {
   const reviewDate = new Date(mission.reviewDate).toLocaleDateString('zh-CN')
   const progress = Math.min(1, sessionsDone / MISSION_TARGET)
@@ -67,18 +69,34 @@ export function Journey({ mission, program, sessions, programs, sessionsDone, pr
       text,
     )
 
+  // 本周每日是否训练过（周一起 7 天）
+  const dayDone = Array.from({ length: 7 }, (_, i) => {
+    const dayStart = monday.getTime() + i * 86400000
+    const dayEnd = dayStart + 86400000
+    return weekSessions.some((s) => {
+      const t = Date.parse(s.startedAt)
+      return t >= dayStart && t < dayEnd
+    })
+  })
+  const todayIdx = (() => {
+    const now = new Date()
+    const d = now.getDay()
+    return d === 0 ? 6 : d - 1
+  })()
+
   return (
     <div className="journey">
-      <header className="page-head">
-        <p className="label">MISSION · {mission.title}</p>
-        <div className="page-head-row">
-          <h1 className="page-title">旅程</h1>
-          <button type="button" className="ghost small print-btn" onClick={() => window.print()}>
-            导出海报
-          </button>
+      <header className="topline">
+        <div className="tl-text">
+          <p className="kicker">MISSION · {mission.title}</p>
+          <h2>旅程</h2>
         </div>
+        <button type="button" className="icon-btn print-btn" onClick={() => window.print()} aria-label="导出海报">
+          导出
+        </button>
       </header>
 
+      {/* 完整画报路线地图：日常隐藏，仅导出海报（打印）时显示 */}
       <section className="route-hero">
         <ParkArt
           lit={progress}
@@ -88,25 +106,82 @@ export function Journey({ mission, program, sessions, programs, sessionsDone, pr
         />
       </section>
 
-      <section className="stat-line">
-        <span className="stat-line-item">
-          <span className="stat-line-value">{sessionsDone}</span>
-          <span className="stat-line-label">/ {MISSION_TARGET} 次点亮</span>
-        </span>
+      {/* 打印海报抬头：日常隐藏 */}
+      <header className="print-head">
+        <p className="label">MISSION · {mission.title}</p>
+        <h1>{mission.title}</h1>
+      </header>
+
+      <div className="row">
+        <div className="metric"><strong>{sessionsDone}</strong><span>/ {MISSION_TARGET} 次点亮</span></div>
         {nextCampAt !== undefined && (
-          <span className="stat-line-item">
-            <span className="stat-line-value">{toNextCamp}</span>
-            <span className="stat-line-label">次到下个营地</span>
-          </span>
+          <div className="metric"><strong>{toNextCamp}</strong><span>次到下个营地</span></div>
         )}
-        <span className="stat-line-item">
-          <span className="stat-line-value">{streak.current}</span>
-          <span className="stat-line-label">周连击 · 最佳 {streak.best}</span>
-        </span>
+        <div className="metric"><strong>{streak.current}</strong><span>周连击 · 最佳 {streak.best}</span></div>
+      </div>
+
+      <section>
+        <p className="section-title"><b>本周</b></p>
+        <div className="week-strip">
+          {WEEKDAY_LABEL.map((d, i) => (
+            <div
+              key={d}
+              className={`day${dayDone[i] ? ' on' : ''}${i === todayIdx ? ' today' : ''}`}
+            >
+              <b>{d}</b>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section>
-        <p className="label">成就印章</p>
+        <p className="section-title"><b>计划课表</b></p>
+        <div className="plan-block">
+          {program.sessions.map((s, i) => (
+            <div key={s.id} className="plan-day">
+              <span className="pd-num">DAY {String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <b>{s.title}</b>
+                <small>{s.blocks.map((b) => EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId).join(' · ')}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <p className="section-title"><b>进度</b></p>
+        <div className="goal-grid">
+          <div className="goal">
+            <b>点亮进度</b>
+            <span>{sessionsDone} / {MISSION_TARGET}</span>
+            <div className="progress-line"><i style={{ width: `${Math.round(progress * 100)}%` }} /></div>
+          </div>
+          <div className="goal">
+            <b>周连击</b>
+            <span>{streak.current} 周</span>
+            <div className="progress-line"><i style={{ width: `${Math.min(100, streak.current * 20)}%` }} /></div>
+          </div>
+          <div className="goal">
+            <b>复盘待确认</b>
+            <span>{weekly.toConfirm.length} 项</span>
+            <div className="progress-line"><i style={{ width: `${Math.min(100, weekly.toConfirm.length * 33)}%` }} /></div>
+          </div>
+        </div>
+      </section>
+
+      {weekly.facts.length > 0 && (
+        <article className="insight">
+          <div className="spark">★</div>
+          <div>
+            <b>本周复盘 · {monday.getMonth() + 1}月{monday.getDate()}日 - {weekEnd.getMonth() + 1}月{weekEnd.getDate()}日</b>
+            <p>{withNames(weekly.facts[0])}</p>
+          </div>
+        </article>
+      )}
+
+      <section>
+        <p className="section-title"><b>成就印章</b></p>
         <div className="stamp-strip">
           {ACHIEVEMENTS.map((a) => (
             <div key={a.id} className={earned.has(a.id) ? 'stamp earned' : 'stamp'}>
@@ -119,7 +194,7 @@ export function Journey({ mission, program, sessions, programs, sessionsDone, pr
 
       <details className="fold">
         <summary>
-          本周复盘 · {monday.getMonth() + 1}月{monday.getDate()}日 - {weekEnd.getMonth() + 1}月{weekEnd.getDate()}日
+          本周复盘详情 · {monday.getMonth() + 1}月{monday.getDate()}日 - {weekEnd.getMonth() + 1}月{weekEnd.getDate()}日
         </summary>
         <div className="fold-body">
           <p className="label">事实</p>

@@ -101,10 +101,6 @@ function App() {
     if (pendingTemplate !== null && pendingAnswers === null) {
       return (
         <div className="app">
-          <header className="topline">
-            <span className="label">PATH / FIELD</span>
-            <span className="label">v0.2 M2</span>
-          </header>
           <main className="stage">
             <QuickQuestions
               onSubmit={(answers) => setPendingAnswers(answers)}
@@ -119,10 +115,6 @@ function App() {
       const preview = templatePreview(pendingTemplate)
       return (
         <div className="app">
-          <header className="topline">
-            <span className="label">PATH / FIELD</span>
-            <span className="label">v0.2 M2</span>
-          </header>
           <main className="stage">
             <section className="mission">
               <p className="label">计划预览</p>
@@ -154,38 +146,34 @@ function App() {
 
     return (
       <div className="app">
-        <header className="topline">
-          <span className="label">PATH / FIELD</span>
-          <span className="label">v0.2 M2</span>
-        </header>
         <main className="stage">
           {!parqDone ? (
             <Parq onSubmit={(answers) => saveParq(answers)} />
           ) : (
             <>
-              <section className="mission entry-hero">
-            <p className="label">从这里开始</p>
-            <h1>先看清整份计划，<br />再决定今天练什么</h1>
-            <p className="body">选一个起点，先看完整计划再开始。</p>
-          </section>
-          <p className="label entry-q">你现在在哪里？</p>
-          {templateChoices.map((t, i) => (
-            <button key={t.templateId} type="button" className="path-card" onClick={() => setPendingTemplate(t)}>
-              <span className="path-no">{String(i + 1).padStart(2, '0')}</span>
-              <span className="path-body">
-                <span className="path-name">{TEMPLATE_LABEL[t.path]}</span>
-                <span className="variant-meta">{t.description}</span>
-                <span className="path-meta">
-                  每周 {t.weeklyRhythm.recommendedPerWeek} 次 · 最少 {t.weeklyRhythm.minViablePerWeek} 次 · {t.sessions.length} 节课
-                  {t.sessions.length > 1 ? '轮换' : ''}
-                </span>
-              </span>
-            </button>
-          ))}
-          <p className="body entry-note">
-            随时可换路径，记录不删。
-            {hasHistory ? '之前的记录都还在「记录」里。' : ''}
-          </p>
+              <section className="mission">
+                <p className="label">从这里开始</p>
+                <h1>先看清整份计划，<br />再决定今天练什么</h1>
+                <p className="body">选一个起点，先看完整计划再开始。</p>
+              </section>
+              <p className="label" style={{ marginTop: 8 }}>你现在在哪里？</p>
+              {templateChoices.map((t, i) => (
+                <button key={t.templateId} type="button" className="path-card" onClick={() => setPendingTemplate(t)}>
+                  <span className="path-no">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="path-body">
+                    <span className="path-name">{TEMPLATE_LABEL[t.path]}</span>
+                    <span className="meta">{t.description}</span>
+                    <span className="path-meta">
+                      每周 {t.weeklyRhythm.recommendedPerWeek} 次 · 最少 {t.weeklyRhythm.minViablePerWeek} 次 · {t.sessions.length} 节课
+                      {t.sessions.length > 1 ? '轮换' : ''}
+                    </span>
+                  </span>
+                </button>
+              ))}
+              <p className="body" style={{ marginTop: 8 }}>
+                随时可换路径，记录不删。
+                {hasHistory ? '之前的记录都还在「记录」里。' : ''}
+              </p>
             </>
           )}
         </main>
@@ -209,11 +197,6 @@ function App() {
 
   return (
     <div className="app">
-      <header className="topline">
-        <span className="label">PATH / FIELD</span>
-        <span className="label">{activeMission.title}</span>
-      </header>
-
       <main className="stage">
         {screen === 'today' && (
           <Today
@@ -292,17 +275,17 @@ function App() {
       </main>
 
       {!inFocus && (
-        <nav className="tabs" aria-label="主导航">
+        <nav className="bottom-nav" aria-label="主导航">
           {TABS.map(({ key, label, Icon }) => (
             <button
               key={key}
               type="button"
-              className={screen === key ? 'tab selected' : 'tab'}
+              className={screen === key ? 'active' : ''}
               aria-current={screen === key ? 'page' : undefined}
               onClick={() => setScreen(key)}
             >
-              <Icon size={24} />
-              <span className="tab-label">{label}</span>
+              <i><Icon size={22} /></i>
+              {label}
             </button>
           ))}
         </nav>
@@ -461,7 +444,7 @@ function JourneyPreviewSection({ template }: { template: ProgramTemplate }) {
         ))}
       </ul>
       <p className="label" style={{ marginTop: 14 }}>如何变化</p>
-      <ul className="rules">
+      <ul className="plain-list">
         <li>同 RPE 档下完成目标区间上限 → 下次候选 +2.5kg，由你确认后生效。</li>
       </ul>
       <p className="body">三个版本都在主路上，按状态与时间选。</p>

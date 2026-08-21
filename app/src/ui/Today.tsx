@@ -126,64 +126,58 @@ export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, 
 
   return (
     <div className="today">
-      <header className="page-head">
-        <p className="label">{todayLabel()}</p>
-        <h1 className="page-title">{planned?.title ?? '计划训练'}</h1>
+      <header className="topline">
+        <div className="tl-text">
+          <p className="kicker">{todayLabel()}</p>
+          <h2>{planned?.title ?? '计划训练'}</h2>
+        </div>
+        <div className="avatar">练</div>
       </header>
 
-      <div className="today-main">
-        {resumable !== undefined && (
-          <div className="resume-card">
-            <p className="body" style={{ margin: 0 }}>
-              有一组训练没做完（{new Date(resumable.startedAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}开始，已填的记录都在）。
-            </p>
-            <div className="resume-actions">
-              <button type="button" className="primary small" onClick={onResume}>继续这组训练</button>
-              <button type="button" className="ghost small" onClick={onDiscard}>不练了，作废</button>
-            </div>
-          </div>
-        )}
-        <button type="button" className="hero-cta" onClick={start}>
-          <span className="cta-icon">
-            <PlayIcon size={20} />
-          </span>
-          <span className="cta-title">
-            {selectedVariant === 'recovery' ? '开始恢复活动' : '开始训练'}
-          </span>
-          <span className="cta-sub">
-            {VARIANT_LABEL[selectedVariant]} · 约 {minutes} 分钟
-          </span>
-        </button>
-
-        {anyAnswered && (
-          <p className="body" style={{ margin: 0 }}>{variant.reason}</p>
-        )}
-        {safety !== null && safety.riskLevel !== 'none' && (
-          <p className={safety.riskLevel === 'urgent' ? 'safety urgent' : 'safety caution'}>
-            {safety.message}
+      {resumable !== undefined && (
+        <div className="resume-card">
+          <p className="body" style={{ margin: 0 }}>
+            有一组训练没做完（{new Date(resumable.startedAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}开始，已填的记录都在）。
           </p>
+          <div className="resume-actions">
+            <button type="button" className="primary small" onClick={onResume}>继续这组训练</button>
+            <button type="button" className="ghost small" onClick={onDiscard}>不练了，作废</button>
+          </div>
+        </div>
+      )}
+
+      <article className="hero">
+        <p className="hero-label">今日任务 · {VARIANT_LABEL[selectedVariant]}</p>
+        <h3 className="hero-title">
+          {selectedVariant === 'recovery' ? '恢复活动' : (planned?.title ?? '训练')}
+        </h3>
+        <p className="hero-sub">
+          约 {minutes} 分钟。{anyAnswered ? variant.reason : '按当前状态推荐，可在下方状态微调里改。'}
+        </p>
+        <button type="button" className="cta" onClick={start} disabled={fullBlocked}>
+          <PlayIcon size={16} />
+          {selectedVariant === 'recovery' ? '开始恢复活动' : '开始训练'}
+        </button>
+      </article>
+
+      {safety !== null && safety.riskLevel !== 'none' && (
+        <p className="safety" style={{ marginTop: 12 }}>{safety.message}</p>
+      )}
+
+      <div className="row">
+        <div className="metric"><strong>{weekDone}</strong><span>本周 / {program.weeklyRhythm.recommendedPerWeek} 次</span></div>
+        <div className="metric"><strong>{streakCurrent}</strong><span>周连击</span></div>
+        {showBodyPrompt === true && onGoRecords !== undefined ? (
+          <button type="button" className="metric link" onClick={onGoRecords}>
+            <strong style={{ fontSize: 18 }}>记体重</strong><span>本周还没记</span>
+          </button>
+        ) : (
+          <div className="metric"><strong>—</strong><span>体重</span></div>
         )}
       </div>
 
-      <aside className="today-side">
-        <section className="stat-line">
-          <span className="stat-line-item">
-            <span className="stat-line-value">{weekDone}</span>
-            <span className="stat-line-label">本周 / {program.weeklyRhythm.recommendedPerWeek} 次</span>
-          </span>
-          <span className="stat-line-item">
-            <span className="stat-line-value">{streakCurrent}</span>
-            <span className="stat-line-label">周连击</span>
-          </span>
-          {showBodyPrompt === true && onGoRecords !== undefined && (
-            <button type="button" className="ghost small stat-line-link" onClick={onGoRecords}>
-              记体重
-            </button>
-          )}
-        </section>
-
-        <details className="fold">
-          <summary>状态微调 · 可选</summary>
+      <details className="fold">
+        <summary>状态微调 · 可选</summary>
         <div className="fold-body">
           <section>
             <p className="label">今天可用时间</p>
@@ -280,18 +274,20 @@ export function Today({ program, nextPlannedSessionId, weekDone, streakCurrent, 
         <details className="fold">
           <summary>今天练什么</summary>
           <div className="fold-body">
-            <ul>
+            <div className="checklist">
               {planned.blocks.map((b) => (
-                <li key={b.exerciseId}>
-                  {EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}
-                  <span className="meta"> · {b.targetSets} x {b.targetReps}{b.keyToMission ? ' · 关键' : ''}</span>
-                </li>
+                <div key={b.exerciseId} className="check">
+                  <div className="tick">{b.keyToMission ? '★' : ''}</div>
+                  <div className="text">
+                    <b>{EXERCISES_BY_ID[b.exerciseId]?.name ?? b.exerciseId}</b>
+                    <span>{b.targetSets} 组 × {b.targetReps}{b.keyToMission ? ' · 关键动作' : ''}</span>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </details>
       )}
-      </aside>
     </div>
   )
 }
